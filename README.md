@@ -2,9 +2,22 @@
   <img src="assets/logo.png" alt="CardioKoop" width="1000"/>
 </p>
 
-# CardioKoop
+# **CARDIOKOOP**  
+*Control-aware Koopman deep learning framework for real-time hemodynamic forecasting and cardiovascular digital twin applications.*
 
-Deep neural network pipeline to learn Koopman eigenfunctions for cardiovascular simulation data.
+CardioKoop provides a high-performance pipeline to learn **Koopman eigenfunctions** from multivariate cardiovascular simulations, enabling **real-time surrogate modeling** of pressures, volumes, and flow signals. The framework includes tools for dataset generation (via a validated lumped-parameter model), neural Koopman operator training, benchmarking against RNN baselines (LSTM, GRU, BiLSTM), and visualization scripts for reproducible analysis.
+
+---
+
+## **Citation**
+If you use this code, data, or pre-trained models in your research, please cite:  
+
+**Haberbusch M., Brandt L.B., Aprile M., Lung D., Kuijper A., Moscato F.**  
+*Real-Time Hemodynamic Prediction via Control-Aware Koopman Operator Models.*  
+*Journal Name Goes Here*, 2025. [DOI pending]
+
+---
+
 
 ## Table of Contents
 
