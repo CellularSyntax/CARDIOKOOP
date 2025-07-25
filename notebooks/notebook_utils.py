@@ -284,7 +284,7 @@ def plot_control_panel(ax, u):
         Control input values over time.
     """
     ax.plot(u, color='k', lw=1.2)
-    ax.set_ylabel('u(t) [mmHg]', fontsize=24)
+    ax.set_ylabel('u(t) [mL]', fontsize=24)
     ax.set_xlabel('Time Step', fontsize=24)
     ax.tick_params(axis='both', labelsize=22)
 
