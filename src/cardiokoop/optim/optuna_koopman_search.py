@@ -10,6 +10,9 @@ Submit to SLURM (no --local):
     python -m cardiokoop.cli optuna_koopman_search --trials 100
 """
 
+# TODO: Update all comments and docstrings mentioning "random search" to "TPE search" or "Bayesian optimization",
+# since the code uses Optuna's TPESampler (Tree-structured Parzen Estimator) instead of pure random search.
+
 import os, sys, copy, argparse, subprocess
 import optuna
 import numpy as np
@@ -149,7 +152,7 @@ def main(args=None) -> None:
     )
 
     study = optuna.create_study(
-        study_name       = f"koopman_random_search_{datetime.datetime.now():%Y%m%d_%H%M%S}",
+        study_name       = f"koopman_hyperparam_search_{datetime.datetime.now():%Y%m%d_%H%M%S}",
         direction        = "minimize",
         sampler          = sampler,      # your TPE sampler
         pruner           = pruner,       #  ←  new
