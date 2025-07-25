@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cardiokoop"
+version = "0.1.0"
+description = "Neural networks to learn Koopman eigenfunctions"
+readme = "README.md"
+authors = [
+  { name = "Bethany Lusch" },
+  { name = "J. Nathan Kutz" },
+  { name = "Steven L. Brunton" },
+]
+dependencies = [
+  "numpy",
+  "torch",
+  "tqdm",
+  "matplotlib",
+  "statsmodels",
+]
+
+[project.scripts]
+cardiokoop = "cardiokoop.cli:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=6.0",
+  "black",
+  "isort",
+  "flake8",
+]
