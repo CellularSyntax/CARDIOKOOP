@@ -12,9 +12,7 @@ CardioKoop provides a high-performance pipeline to learn **Koopman eigenfunction
 ## **Citation**
 If you use this code, data, or pre-trained models in your research, please cite:  
 
-**Haberbusch M., Brandt L.B., Aprile M., Lung D., Kuijper A., Moscato F.**  
-*Real-Time Hemodynamic Prediction via Control-Aware Koopman Operator Models.*  
-*Journal Name Goes Here*, 2025. [DOI pending]
+**Haberbusch M., Brandt L.B., Aprile M., Lung D., Kuijper A., Moscato F.** Real-Time Hemodynamic Prediction via Control-Aware Koopman Operator Models.  *Journal Name Goes Here*, 2025. [DOI pending]
 
 ---
 
