@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.jpg" alt="CardioKoop" width="1000"/>
+  <img src="assets/logo.png" alt="CardioKoop" width="1000"/>
 </p>
 
 # CardioKoop
