@@ -5,7 +5,7 @@
 # **CARDIOKOOP**  
 *Control-aware Koopman deep learning framework for real-time hemodynamic forecasting and cardiovascular digital twin applications.*
 
-CardioKoop provides a high-performance pipeline to learn **Koopman eigenfunctions** from multivariate cardiovascular simulations, enabling **real-time surrogate modeling** of pressures, volumes, and flow signals. The framework includes tools for dataset generation (via a validated lumped-parameter model), neural Koopman operator training, benchmarking against RNN baselines (LSTM, GRU, BiLSTM), and visualization scripts for reproducible analysis.
+CARDIOKOOP provides a high-performance pipeline to learn **Koopman eigenfunctions** from multivariate cardiovascular simulations, enabling **real-time surrogate modeling** of pressures, volumes, and flow signals. The framework includes tools for dataset generation (via a validated lumped-parameter model), neural Koopman operator training, benchmarking against RNN baselines (LSTM, GRU, BiLSTM), and visualization scripts for reproducible analysis.
 
 ---
 
