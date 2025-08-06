@@ -120,9 +120,6 @@ def main(args=None) -> None:
         python -m cardiokoop.optim.optuna_koopman_search [flags]
     or via the cardiokoop CLI wrapper that passes `args` in as a list.
     """
-
-    print("✅ HELLO!  Optuna random search for Koopman hyper-parameters")
-
     if args is None:                 # called directly with  -m  -> use CLI flags
         args = sys.argv[1:]
 
@@ -133,11 +130,9 @@ def main(args=None) -> None:
                    help="Number of random-search trials")
     cfg = p.parse_args(args)
 
-    print("🔧 Config:\n", cfg)
-
     # ---- optional SLURM hand-off ------------------------------------
     if not cfg.local and "SLURM_JOB_ID" not in os.environ:
-        print("📤 Submitting self to SLURM …")
+        print("Submitting self to SLURM …")
         subprocess.check_call(["sbatch"] + sys.argv)
         return
 
@@ -170,9 +165,9 @@ def main(args=None) -> None:
     #)
     study.optimize(objective, n_trials=cfg.trials)
 
-    print("🎉  Finished.  Best-trial params:\n", study.best_trial.params) 
+    print("Finished.  Best-trial params:\n", study.best_trial.params) 
 
 
 if __name__ == "__main__":           # allows `python optuna_koopman_search.py`
-    print("🧠 CLI entry-point for Optuna Koopman search")
+    print("CLI entry-point for Optuna Koopman search")
     main()
