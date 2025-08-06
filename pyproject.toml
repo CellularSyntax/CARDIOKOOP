@@ -19,7 +19,11 @@ dependencies = [
   "fastdtw",
   "pandas",
   "seaborn",
-  "notebook"
+  "notebook",
+  "optuna",
+  "plotly",
+  "scikit-learn",
+  "kaleido"
 ]
 
 [project.scripts]
