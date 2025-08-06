@@ -8,8 +8,7 @@ import os, sys, glob, re, time, pickle, argparse
 import numpy as np, torch
 from fastdtw import fastdtw
 
-sys.path.insert(0, os.path.dirname(__file__))          # local utils
-from postprocessing_utils import load_weights_koopman
+from cardiokoop.postprocessing.postprocess_utils import load_weights_koopman
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

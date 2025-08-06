@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cardiokoop"
-version = "0.1.0"
+version = "1.0.0"
 description = "Neural networks to learn Koopman eigenfunctions"
 readme = "README.md"
 authors = [
@@ -16,6 +16,14 @@ dependencies = [
   "tqdm",
   "matplotlib",
   "statsmodels",
+  "fastdtw",
+  "pandas",
+  "seaborn",
+  "notebook",
+  "optuna",
+  "plotly",
+  "scikit-learn",
+  "kaleido"
 ]
 
 [project.scripts]

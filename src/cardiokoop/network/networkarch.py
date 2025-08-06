@@ -137,20 +137,9 @@ class KoopmanNetControl(KoopmanNet):
 
         y_next = torch.cat(complex_parts + real_parts, dim=1)
 
-        # Optional: Clamp to avoid instability from omega explosions
-        #y_next = torch.clamp(y_next, -10.0, 10.0)
-
         # Control influence with scaled, bounded effect
         B_u = self.control_gain * torch.tanh(self.control_net(u_t))
-
-        # Optional debug logging
-        # if torch.isnan(B_u).any() or torch.isinf(B_u).any():
-        #     print("[ERROR] B_u contains NaNs or Infs")
-        # if torch.isnan(y_next).any() or torch.isinf(y_next).any():
-        #     print("[ERROR] y_next contains NaNs or Infs")
-        # print(f"[DEBUG] B_u stats: min={B_u.min().item():.4f}, max={B_u.max().item():.4f}, mean={B_u.mean().item():.4f}")
-        # print(f"[DEBUG] y_next stats before control: min={y_next.min().item():.4f}, max={y_next.max().item():.4f}")
-
+        
         return y_next + B_u
 
 
