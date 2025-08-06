@@ -31,6 +31,7 @@ If you use this code, data, or pre-trained models in your research, please cite:
 ```bash
 git clone https://github.com/CellularSyntax/CARDIOKOOP.git
 cd CARDIOKOOP
+git lfs pull
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
@@ -41,11 +42,7 @@ pip install -e .
 
 Slice raw simulation CSVs into normalized train/validation/test windows:
 
-1. Configure parameters in `src/cardiokoop/data/create_dataset.py`:
-   - `input_dir`: path to raw CSV files (default: `./raw_data/res_130625_500/csv_sims`)
-   - `output_base`: output folder for generated CSVs (default: `./data/csv_data_500_12sigs`)
-   - `t_start`, `t_end`, `DOWNSAMPLE_FACTOR`, etc.
-2. Run the CLI command:
+1. Run the CLI command:
 
 ```bash
 cardiokoop create_dataset
@@ -55,6 +52,13 @@ Generated files in `data/`:
 - `csv_data_500_12sigs_train*_x.csv` / `*_u.csv`
 - `csv_data_500_12sigs_val*_x.csv` / `*_u.csv`
 - `normalization_mean.npy`, `normalization_std.npy`
+
+2. Run the CLI command to get slicing options: 
+
+```bash
+cardiokoop create_dataset --help
+```
+
 
 ## Training Models
 
@@ -76,10 +80,10 @@ cardiokoop train_lstm --use-control --exp-folder results/lstm_ctrl
 
 ## Hyperparameter Search
 
-Run an Optuna search for Koopman network hyperparameters:
+Run an local Optuna search for Koopman network hyperparameters:
 
 ```bash
-cardiokoop optuna_koopman_search --exp-folder results/optuna_koopman
+cardiokoop optuna_koopman_search --exp-folder results/optuna_koopman --local
 ```
 
 ## Post-processing Results
@@ -96,21 +100,19 @@ Compute metrics, generate plots, and save a results pickle for further analysis:
 Example:
 
 ```bash
-cardiokoop postprocess_koopman --exp-folder results/koopman_exp1
+cardiokoop postprocess_koopman --exp-folder results/koopman
 ```
 
 ## Visualization Notebooks
 
-Interactive notebooks for analyzing and comparing results:
+Interactive notebook to reproduce all results presented in the manuscript:
 
-- `notebooks/evaluate_koopman_model.ipynb` — evaluate and plot a single Koopman model
-- `notebooks/compare_model_performance.ipynb` — summary tables and figures across models
+- `notebooks/generate_figures_and_tables.ipynb`
 
 Launch with Jupyter:
 
 ```bash
-jupyter notebook notebooks/evaluate_koopman_model.ipynb
-jupyter notebook notebooks/compare_model_performance.ipynb
+jupyter notebook notebooks/generate_figures_and_tables.ipynb
 # or use Jupyter Lab:
-jupyter lab notebooks/compare_model_performance.ipynb
+jupyter lab notebooks/generate_figures_and_tables.ipynb
 ```
