@@ -29,14 +29,12 @@ If you use this code, data, or pre-trained models in your research, please cite:
 ## Installation
 
 ```bash
-git clone https://github.com/CellularSyntax/CardioKoop.git
-cd CardioKoop
-python3 -m venv env
-source env/bin/activate
+git clone https://github.com/CellularSyntax/CARDIOKOOP.git
+cd CARDIOKOOP
+python3 -m venv .venv
+source .venv/bin/activate
 pip install --upgrade pip
 pip install -e .
-# Notebook dependencies
-pip install fastdtw pandas seaborn notebook
 ```
 
 ## Data Preprocessing
