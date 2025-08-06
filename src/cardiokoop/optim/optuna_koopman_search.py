@@ -10,9 +10,6 @@ Submit to SLURM (no --local):
     python -m cardiokoop.cli optuna_koopman_search --trials 100
 """
 
-# TODO: Update all comments and docstrings mentioning "random search" to "TPE search" or "Bayesian optimization",
-# since the code uses Optuna's TPESampler (Tree-structured Parzen Estimator) instead of pure random search.
-
 import os, sys, copy, argparse, subprocess
 import optuna
 import numpy as np
@@ -78,30 +75,19 @@ def objective(trial: optuna.Trial) -> float:
     # ── 6. Forecast horizon ───────────────────────────────────────
     num_shifts = trial.suggest_categorical("num_shifts", list(range(8, 16)))
     params["num_shifts"] = params["num_shifts_middle"] = num_shifts
-
-    # ── 7. Training dynamics (cheap wins) ─────────────────────────
-    #params["batch_size"]    = trial.suggest_categorical("batch_size", [128, 256, 512])
-
-    # ── 8. Use only the first 100 ICs for the optimization  ────────
-    #params["num_initial_conditions"] = 100
-    #max_shifts   = max(params["num_shifts"], params["num_shifts_middle"])
-    #num_examples = params["num_initial_conditions"] * (params["len_time"] - max_shifts)
-    #steps_to_see_all = num_examples / params["batch_size"]
-    #params["num_steps_per_file_pass"] = int(steps_to_see_all + 1) * params["num_steps_per_batch"]
-    # ------------------------------------------------------------------
     
-    # ── 9. Per-trial output folder ─────────────────────────────────
+    # ── 7. Per-trial output folder ─────────────────────────────────
     trial_root = os.path.join("./results/optuna_runs", f"opt_trial_{trial.number}")
     os.makedirs(trial_root, exist_ok=True)
 
-    # ── 10. Single training run ─────────────────────────────────────
+    # ── 8. Single training run ─────────────────────────────────────
     fold_params = copy.deepcopy(params)
     fold_params["cv_fold"]    = 0          # required by training code
     fold_params["folder_name"] = trial_root
     os.makedirs(fold_params["folder_name"], exist_ok=True)
     main_exp(fold_params, trial=trial)  # pass the trial for pruning
 
-    # ── 11. Evaluate & report to Optuna ────────────────────────────
+    # ── 9. Evaluate & report to Optuna ────────────────────────────
     csv_path  = fold_params["model_path"].replace("model.ckpt", "error.csv")
     errors    = np.loadtxt(csv_path, delimiter=",")
 
@@ -155,14 +141,7 @@ def main(args=None) -> None:
         load_if_exists   = True,
     )
 
-    #study   = optuna.create_study(
-    #    study_name       =f"koopman_random_search_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
-    #    #study_name       =f"koopman_random_search",
-    #    direction        ="minimize",
-    #    sampler          =sampler,
-    #    storage          =storage,
-    #    load_if_exists   =True,
-    #)
+
     study.optimize(objective, n_trials=cfg.trials)
 
     print("Finished.  Best-trial params:\n", study.best_trial.params) 
