@@ -38,6 +38,16 @@ pip install --upgrade pip
 pip install -e .
 ```
 
+Check if the CARDIOKOOP launches without problems: 
+
+```bash
+cardiokoop --help
+```
+
+You should see: 
+
+<img width="780" height="334" alt="image" src="https://github.com/user-attachments/assets/05e253b8-3ee4-46e7-9168-e486a130cd9c" />
+
 ## Data Preprocessing
 
 Slice raw simulation CSVs into normalized train/validation/test windows:
