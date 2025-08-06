@@ -520,16 +520,18 @@ def plot_errors_hankel_dmd(errors, data_sources, params, results_base_path, fig_
     axes[0].legend(fontsize=14)
     axes[0].grid(False)
 
+    cb_palette = sns.color_palette("colorblind", n_colors=3)
+
     # ------------------- (2) PCA–Hankel plot --------------------------
-    for label, traj in data_sources.items():
+    for idx, (label, traj) in enumerate(data_sources.items()):
         cumvar, p_pca = average_pca_hankel_curves(traj, window=100, var_explained=0.95)
         axes[1].plot(
             range(1, len(cumvar) + 1),
             cumvar,
             label=f"{label} ($PC$ = {p_pca})",
-            color=colors_[label]
+            color=cb_palette[idx]
         )
-        axes[1].axvline(p_pca, color=colors_[label], linestyle='--', lw=1)
+        axes[1].axvline(p_pca, color=cb_palette[idx], linestyle='--', lw=1)
     axes[1].axhline(0.95, color="#bbbbbb", linestyle="--", lw=1)
     axes[1].set(xlabel="Component", ylabel="Cumulative variance")
     axes[1].tick_params(labelsize=14)
