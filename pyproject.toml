@@ -16,6 +16,10 @@ dependencies = [
   "tqdm",
   "matplotlib",
   "statsmodels",
+  "fastdtw",
+  "pandas",
+  "seaborn",
+  "notebook"
 ]
 
 [project.scripts]
