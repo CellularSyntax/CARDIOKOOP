@@ -292,7 +292,7 @@ def try_net(data_val, params, trial=None):
             trial.report(val_pct_rmse, step=step_idx)
 
             if trial.should_prune():
-                tqdm.write("🔪 Optuna pruned this trial at pass "
+                tqdm.write("Optuna pruned this trial at pass "
                         f"{step_idx} (val %RMSE={val_pct_rmse:.2f})")
                 raise optuna.TrialPruned()
         if finished:
