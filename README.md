@@ -31,7 +31,7 @@ If you use this code, data, or pre-trained models in your research, please cite:
 ```bash
 git clone https://github.com/CellularSyntax/CARDIOKOOP.git
 cd CARDIOKOOP
-git lfs pull
+git lfs pull # make sure you have git-lfs installed so you can load the data files from the repository
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
