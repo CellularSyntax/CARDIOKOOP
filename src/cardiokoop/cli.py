@@ -151,7 +151,7 @@ def ascii_banner() -> None:
     print("""
 The copyrights of this software are owned by Medical University of Vienna. Please refer to the LICENSE and
 README.md files for licensing instructions.The source code can be found at the following GitHub repository:
-https://github.com/CellularSyntax/cardiokoop
+https://github.com/CellularSyntax/CARDIOKOOP
 """)
     print("---")
 
