@@ -114,6 +114,8 @@ def main(args=None) -> None:
                    help="Run locally (disable SLURM hand-off)")
     p.add_argument("--trials", type=int, default=50,
                    help="Number of random-search trials")
+    p.add_argument("--exp-folder",  type=str, default="results/optuna_runs",
+                   help="Base folder for per-trial output")
     cfg = p.parse_args(args)
 
     # ---- optional SLURM hand-off ------------------------------------
