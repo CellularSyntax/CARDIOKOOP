@@ -1,0 +1,107 @@
+{
+  "delta_t_s": 0.01,
+  "n_complex_pairs": 4,
+  "n_real": 4,
+  "modes": [
+    {
+      "type": "complex",
+      "index": 0,
+      "omega_rad_per_s": 11.739239692687988,
+      "omega_rad_per_step": 0.11739239692687989,
+      "sigma": -5.3789801597595215,
+      "f_hz": 1.8683580252318757,
+      "period_s": 0.5352293224827149,
+      "mean_radius": 0.27120646834373474,
+      "latent_variance": 0.029845580458641052
+    },
+    {
+      "type": "complex",
+      "index": 1,
+      "omega_rad_per_s": 0.06019775569438934,
+      "omega_rad_per_step": 0.0006019775569438934,
+      "sigma": -0.004357024095952511,
+      "f_hz": 0.009580770381800354,
+      "period_s": 104.37574017008085,
+      "mean_radius": 0.18218475580215454,
+      "latent_variance": 0.029557619243860245
+    },
+    {
+      "type": "complex",
+      "index": 2,
+      "omega_rad_per_s": -0.02662971056997776,
+      "omega_rad_per_step": -0.0002662971056997776,
+      "sigma": -0.0027715018950402737,
+      "f_hz": -0.004238250070318454,
+      "period_s": 235.94643624340503,
+      "mean_radius": 0.2756401598453522,
+      "latent_variance": 0.03783624619245529
+    },
+    {
+      "type": "complex",
+      "index": 3,
+      "omega_rad_per_s": -11.144118309020996,
+      "omega_rad_per_step": -0.11144118309020996,
+      "sigma": 0.6510633826255798,
+      "f_hz": -1.7736415152815856,
+      "period_s": 0.5638117913817768,
+      "mean_radius": 0.528076171875,
+      "latent_variance": 0.31482136249542236
+    },
+    {
+      "type": "real",
+      "index": 0,
+      "sigma": -0.0029185027815401554,
+      "decay_factor_per_step": 0.9999708153980634,
+      "mean_abs_value": 0.15827779471874237,
+      "latent_variance": 0.010933628305792809
+    },
+    {
+      "type": "real",
+      "index": 1,
+      "sigma": 0.04065539687871933,
+      "decay_factor_per_step": 1.0004066366230526,
+      "mean_abs_value": 0.163907989859581,
+      "latent_variance": 0.038560982793569565
+    },
+    {
+      "type": "real",
+      "index": 2,
+      "sigma": -6.337690353393555,
+      "decay_factor_per_step": 0.9385896492587618,
+      "mean_abs_value": 0.06699732691049576,
+      "latent_variance": 2.225013122370001e-05
+    },
+    {
+      "type": "real",
+      "index": 3,
+      "sigma": 0.03282072767615318,
+      "decay_factor_per_step": 1.0003282611426627,
+      "mean_abs_value": 0.05785346403717995,
+      "latent_variance": 0.003273194655776024
+    }
+  ],
+  "heart_rate_range_candidates": [
+    {
+      "type": "complex",
+      "index": 0,
+      "omega_rad_per_s": 11.739239692687988,
+      "omega_rad_per_step": 0.11739239692687989,
+      "sigma": -5.3789801597595215,
+      "f_hz": 1.8683580252318757,
+      "period_s": 0.5352293224827149,
+      "mean_radius": 0.27120646834373474,
+      "latent_variance": 0.029845580458641052
+    },
+    {
+      "type": "complex",
+      "index": 3,
+      "omega_rad_per_s": -11.144118309020996,
+      "omega_rad_per_step": -0.11144118309020996,
+      "sigma": 0.6510633826255798,
+      "f_hz": -1.7736415152815856,
+      "period_s": 0.5638117913817768,
+      "mean_radius": 0.528076171875,
+      "latent_variance": 0.31482136249542236
+    }
+  ]
+}

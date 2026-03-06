@@ -1,0 +1,138 @@
+{
+  "source": "optuna_hyperparam_search_20250713",
+  "n_completed_trials": 208,
+  "note": "Optuna search covered n_complex \u2208 {3,4,5}, n_real \u2208 {3,4,5}. Values n_complex \u2208 {1,2,6} were not explored and would require separate training runs.",
+  "metric": "validation %RMSE (Optuna objective)",
+  "by_nc_nr": [
+    {
+      "n_complex": 3,
+      "n_real": 3,
+      "latent_dim": 9,
+      "n_trials": 7,
+      "pct_mean": 1.3608552524202924,
+      "pct_sd": 0.7073032597000323,
+      "pct_median": 1.476132033225179,
+      "pct_min": 0.6365317841793571,
+      "pct_max": 2.4607620882584182
+    },
+    {
+      "n_complex": 3,
+      "n_real": 4,
+      "latent_dim": 10,
+      "n_trials": 30,
+      "pct_mean": 0.8240529332821158,
+      "pct_sd": 0.5547958825239051,
+      "pct_median": 0.691615127379057,
+      "pct_min": 0.4974065886818036,
+      "pct_max": 3.6357390609638505
+    },
+    {
+      "n_complex": 3,
+      "n_real": 5,
+      "latent_dim": 11,
+      "n_trials": 20,
+      "pct_mean": 0.7285704932473139,
+      "pct_sd": 0.3227283138043676,
+      "pct_median": 0.6435443496923972,
+      "pct_min": 0.5183481100433099,
+      "pct_max": 2.0223040361810565
+    },
+    {
+      "n_complex": 4,
+      "n_real": 3,
+      "latent_dim": 11,
+      "n_trials": 11,
+      "pct_mean": 0.7186818793869677,
+      "pct_sd": 0.18566271866592407,
+      "pct_median": 0.6758012157316783,
+      "pct_min": 0.4639912131831354,
+      "pct_max": 1.1318433099376075
+    },
+    {
+      "n_complex": 4,
+      "n_real": 4,
+      "latent_dim": 12,
+      "n_trials": 27,
+      "pct_mean": 0.8131471714207151,
+      "pct_sd": 0.4469424210730632,
+      "pct_median": 0.6558952594478874,
+      "pct_min": 0.4475646308384157,
+      "pct_max": 2.6153036755948604
+    },
+    {
+      "n_complex": 4,
+      "n_real": 5,
+      "latent_dim": 13,
+      "n_trials": 18,
+      "pct_mean": 1.0443891180456708,
+      "pct_sd": 0.5800089254716071,
+      "pct_median": 0.7997674184365613,
+      "pct_min": 0.5565618117840854,
+      "pct_max": 2.5637933903995704
+    },
+    {
+      "n_complex": 5,
+      "n_real": 3,
+      "latent_dim": 13,
+      "n_trials": 15,
+      "pct_mean": 0.7907757795584459,
+      "pct_sd": 0.32279186025097595,
+      "pct_median": 0.6522646597206607,
+      "pct_min": 0.5334060198772024,
+      "pct_max": 1.6232251772927229
+    },
+    {
+      "n_complex": 5,
+      "n_real": 4,
+      "latent_dim": 14,
+      "n_trials": 34,
+      "pct_mean": 0.6537662810865079,
+      "pct_sd": 0.14424042029820588,
+      "pct_median": 0.6013104525295891,
+      "pct_min": 0.487655844847623,
+      "pct_max": 1.0396170368201976
+    },
+    {
+      "n_complex": 5,
+      "n_real": 5,
+      "latent_dim": 15,
+      "n_trials": 46,
+      "pct_mean": 0.6837956074548368,
+      "pct_sd": 0.2472457797546604,
+      "pct_median": 0.6008278795768374,
+      "pct_min": 0.4669848245052576,
+      "pct_max": 1.9321540223613307
+    }
+  ],
+  "by_n_complex_nr_fixed4": [
+    {
+      "n_complex": 3,
+      "n_real_fixed": 4,
+      "latent_dim": 10,
+      "n_trials": 30,
+      "pct_mean": 0.8240529332821158,
+      "pct_sd": 0.5547958825239051
+    },
+    {
+      "n_complex": 4,
+      "n_real_fixed": 4,
+      "latent_dim": 12,
+      "n_trials": 27,
+      "pct_mean": 0.8131471714207151,
+      "pct_sd": 0.4469424210730632
+    },
+    {
+      "n_complex": 5,
+      "n_real_fixed": 4,
+      "latent_dim": 14,
+      "n_trials": 34,
+      "pct_mean": 0.6537662810865079,
+      "pct_sd": 0.14424042029820588
+    }
+  ],
+  "best_trial": {
+    "n_complex": 4,
+    "n_real": 4,
+    "val_pct_rmse": 0.4475646308384157
+  }
+}
