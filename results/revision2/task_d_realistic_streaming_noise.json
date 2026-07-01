@@ -1,0 +1,84 @@
+{
+  "description": "Realistic (AWGN + baseline wander) IC corruption and re-anchoring/streaming rollout on the frozen Koopman model; no retraining.",
+  "snr_levels_db": [
+    30,
+    20,
+    10,
+    5
+  ],
+  "wander_fraction": 0.5,
+  "wander_band_hz": [
+    0.05,
+    0.3
+  ],
+  "reanchor_K_steps": 100,
+  "reanchor_interval_s": 1.0,
+  "seed": 42,
+  "clean_baseline": {
+    "pct_rmse_mean": 17.53594727398672,
+    "pct_rmse_ci95": 1.4446325750373463,
+    "pct_rmse_sd": 5.211783112917814,
+    "r2_mean": 0.6869528651826182,
+    "r2_sd": 0.0969954159144878
+  },
+  "realistic_ic": {
+    "30": {
+      "pct_rmse_mean": 18.155986935023527,
+      "pct_rmse_ci95": 1.4133946671559672,
+      "pct_rmse_sd": 5.09908649815759,
+      "r2_mean": 0.66566181243995,
+      "r2_sd": 0.12883545973901153
+    },
+    "20": {
+      "pct_rmse_mean": 23.61747179328776,
+      "pct_rmse_ci95": 2.474545558905176,
+      "pct_rmse_sd": 8.92738747478013,
+      "r2_mean": 0.48923917461409266,
+      "r2_sd": 0.27545855696738586
+    },
+    "10": {
+      "pct_rmse_mean": 34.5680261118131,
+      "pct_rmse_ci95": 2.7802289003169087,
+      "pct_rmse_sd": 10.030197493188286,
+      "r2_mean": 0.12760900557124372,
+      "r2_sd": 0.39608255918439267
+    },
+    "5": {
+      "pct_rmse_mean": NaN,
+      "pct_rmse_ci95": NaN,
+      "pct_rmse_sd": NaN,
+      "r2_mean": NaN,
+      "r2_sd": NaN
+    }
+  },
+  "streaming_reanchor": {
+    "30": {
+      "pct_rmse_mean": 5.829149849561066,
+      "pct_rmse_ci95": 0.16385522934452618,
+      "pct_rmse_sd": 0.5911384887877115,
+      "r2_mean": 0.952654697591408,
+      "r2_sd": 0.013414751704067094
+    },
+    "20": {
+      "pct_rmse_mean": 11.881641332616473,
+      "pct_rmse_ci95": 0.8376370161656549,
+      "pct_rmse_sd": 3.0219327260387776,
+      "r2_mean": 0.8418183037484746,
+      "r2_sd": 0.05528309107717289
+    },
+    "10": {
+      "pct_rmse_mean": 25.19757944574076,
+      "pct_rmse_ci95": 1.3346665796078183,
+      "pct_rmse_sd": 4.815060148284405,
+      "r2_mean": 0.5216721594847722,
+      "r2_sd": 0.09970258388053352
+    },
+    "5": {
+      "pct_rmse_mean": 35.85337389540107,
+      "pct_rmse_ci95": 1.7724177522860547,
+      "pct_rmse_sd": 6.394329651718815,
+      "r2_mean": 0.222656790732541,
+      "r2_sd": 0.14144427284568595
+    }
+  }
+}
