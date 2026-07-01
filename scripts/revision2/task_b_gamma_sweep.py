@@ -106,7 +106,7 @@ def main():
     ax1.annotate("control\nablation\n$\\gamma$=0 (51%)", xy=(0.0, 51.4),
                  xytext=(0.0, 400), fontsize=9, color="#ac4484",
                  arrowprops=dict(arrowstyle="->", color="#ac4484", lw=1))
-    ax1.set_title("(a) %RMSE vs. control gain", fontsize=12)
+    ax1.set_title("(a)", fontsize=12, loc="left")
     ax1.grid(axis="y", which="both", ls="--", alpha=0.3)
 
     # Panel (b): R^2 (clipped)
@@ -118,7 +118,7 @@ def main():
     ax3.set_ylabel(r"$R^2$ (pooled, clipped at $-5$)", fontsize=13)
     ax3.tick_params(labelsize=12)
     ax3.axvline(trained_gamma, color="k", ls=":", lw=1.2, alpha=0.7)
-    ax3.set_title("(b) $R^2$ vs. control gain", fontsize=12)
+    ax3.set_title("(b)", fontsize=12, loc="left")
     off = [(g, v) for g, v in zip(g_arr, r2_arr) if v < R2_FLOOR]
     if off:
         ax3.text(0.98, 0.03,
@@ -127,8 +127,6 @@ def main():
                  fontsize=8.5, style="italic", color="#555555")
     ax3.grid(axis="y", ls="--", alpha=0.3)
 
-    fig.suptitle(r"Control-gain $\gamma$ sensitivity (frozen model, inference only; "
-                 r"$\gamma$=0 is the control-net ablation)", fontsize=12, y=1.02)
     fig.tight_layout()
     for ext in ("svg", "png"):
         fig.savefig(os.path.join(C.FIG_DIR, f"figureS_gamma_control_sweep.{ext}"),

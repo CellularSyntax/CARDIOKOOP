@@ -243,7 +243,7 @@ def main():
 
     # ── Figure 5 (rev2): 4-panel comparison ───────────────────────────────────
     pal = dict(zip(models, C.PALETTE_HEX))
-    fig = plt.figure(figsize=(27, 4.2))
+    fig = plt.figure(figsize=(27, 4.4))
     gs = GridSpec(1, 5, width_ratios=[6, 3, 4, 3, 3], figure=fig)
 
     SIG_MAIN = [2, 7, 8, 10, 11]
@@ -256,8 +256,7 @@ def main():
     ax0.set_yscale("log"); ax0.set_ylim(bottom=0.3)
     ax0.set_xticks(xm + w * (len(models) - 1) / 2)
     ax0.set_xticklabels([C.YLAB[i] for i in SIG_MAIN], fontsize=12)
-    ax0.set_ylabel("%RMSE (log)", fontsize=13); ax0.set_title("(b) Per-signal %RMSE", fontsize=12)
-    ax0.legend(fontsize=8.5, ncol=4, loc="upper left", frameon=False)
+    ax0.set_ylabel("%RMSE (log)", fontsize=13)
     ax0.grid(axis="y", which="both", ls="--", alpha=0.3); ax0.set_axisbelow(True)
 
     ax1 = fig.add_subplot(gs[1])
@@ -265,45 +264,47 @@ def main():
         inf = results[m]["inference_times_s"].mean()
         ax1.scatter(inf, results[m]["pct_per_traj_ps"].mean(),
                     s=110 if m == "Koopman" else 60, color=pal[m],
-                    marker="*" if m == "Koopman" else "o", label=m)
+                    marker="*" if m == "Koopman" else "o")
     ax1.set_xscale("log"); ax1.set_yscale("log")
     ax1.set_xlabel("Inference time (s, log)", fontsize=12)
     ax1.set_ylabel("Avg %RMSE (log)", fontsize=12)
-    ax1.set_title("(c) Accuracy vs. speed", fontsize=12)
     ax1.grid(True, which="both", ls="--", alpha=0.3); ax1.set_axisbelow(True)
 
     ax2 = fig.add_subplot(gs[2])
     for m in models:
         cum = results[m]["cumulative_pct_per_traj"]
-        ax2.plot(np.nanmean(cum, axis=0), color=pal[m], lw=2, label=m)
+        ax2.plot(np.nanmean(cum, axis=0), color=pal[m], lw=2)
     ax2.set_yscale("log")
     ax2.set_xlabel("Time step", fontsize=12); ax2.set_ylabel("Cumulative %RMSE (log)", fontsize=12)
-    ax2.set_title("(d) Cumulative %RMSE", fontsize=12)
-    ax2.legend(fontsize=8.5, ncol=2); ax2.grid(True, which="both", ls="--", alpha=0.3)
+    ax2.grid(True, which="both", ls="--", alpha=0.3)
 
-    # (e) speedup vs the ODE simulator (log), sorted descending
+    # (e) speed-up vs the ODE simulator (log), sorted descending, labelled
     ax3 = fig.add_subplot(gs[3])
-    spd = [(m, speedup[m]) for m in models]
-    spd.sort(key=lambda kv: kv[1], reverse=True)
+    spd = sorted([(m, speedup[m]) for m in models], key=lambda kv: kv[1], reverse=True)
     ax3.bar(range(len(spd)), [v for _, v in spd], color=[pal[m] for m, _ in spd])
-    ax3.set_yscale("log"); ax3.set_ylabel("Speed-up vs. sim (log)", fontsize=12)
+    ax3.set_yscale("log")
+    ax3.set_ylim(top=max(v for _, v in spd) * 6)
+    for i, (m, v) in enumerate(spd):
+        ax3.text(i, v * 1.35, f"{v:.1f}x", ha="center", va="bottom", fontsize=7.5, rotation=90)
+    ax3.set_ylabel("Speed-up vs. sim (log)", fontsize=12)
     ax3.set_xticks(range(len(spd)))
     ax3.set_xticklabels([m for m, _ in spd], rotation=40, ha="right", fontsize=9)
-    ax3.set_title("(e) Inference speed-up", fontsize=12)
     ax3.grid(axis="y", which="both", ls="--", alpha=0.3); ax3.set_axisbelow(True)
 
-    # (f) model size (parameter count, log)
+    # (f) model size (parameter count, log), sorted smallest -> largest
     ax4 = fig.add_subplot(gs[4])
-    npv = [nparams[m] for m in models]
-    ax4.bar(range(len(models)), npv, color=[pal[m] for m in models])
+    order = sorted(models, key=lambda m: nparams[m])
+    ax4.bar(range(len(order)), [nparams[m] for m in order], color=[pal[m] for m in order])
     ax4.set_yscale("log"); ax4.set_ylabel("Parameters (log)", fontsize=12)
-    ax4.set_xticks(range(len(models)))
-    ax4.set_xticklabels(models, rotation=40, ha="right", fontsize=9)
-    ax4.set_title("(f) Model size", fontsize=12)
+    ax4.set_xticks(range(len(order)))
+    ax4.set_xticklabels(order, rotation=40, ha="right", fontsize=9)
     ax4.grid(axis="y", which="both", ls="--", alpha=0.3); ax4.set_axisbelow(True)
 
-    fig.suptitle("Figure 5 (rev.2): forecasting comparison incl. DLinear/NLinear "
-                 "(seed-42 test split)", fontsize=13, y=1.03)
+    # single-row shared legend on top of the figure (no per-panel legends)
+    handles, labels = ax0.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, 1.0),
+               ncol=len(models), frameon=False, fontsize=11,
+               handlelength=1.2, handletextpad=0.4, columnspacing=1.2)
     fig.tight_layout()
     for ext in ("svg", "png"):
         fig.savefig(os.path.join(C.FIG_DIR, f"figure5_rev2_comparison.{ext}"),
@@ -368,14 +369,14 @@ def main():
         axes[1].plot(x, np.clip(rm, -3, 1.05), "o-", color=pal[m], lw=lw, label=m)
     axes[0].set_yscale("log"); axes[0].set_xticks(x); axes[0].set_xticklabels(labels)
     axes[0].set_ylabel("%RMSE (log)"); axes[0].set_xlabel("Input noise (SNR)")
-    axes[0].set_title("(a) %RMSE vs. SNR"); axes[0].legend(fontsize=9, ncol=2)
     axes[0].grid(axis="y", which="both", ls="--", alpha=0.3)
     axes[1].axhline(0, color="#888", ls=":", lw=0.8)
     axes[1].set_xticks(x); axes[1].set_xticklabels(labels)
     axes[1].set_ylabel(r"$R^2$ (clipped)"); axes[1].set_xlabel("Input noise (SNR)")
-    axes[1].set_title(r"(b) $R^2$ vs. SNR"); axes[1].legend(fontsize=9, ncol=2)
     axes[1].grid(axis="y", ls="--", alpha=0.3)
-    fig.suptitle("Figure 6 (rev.2): AWGN noise robustness, all architectures", fontsize=12, y=1.02)
+    h6, l6 = axes[0].get_legend_handles_labels()
+    fig.legend(h6, l6, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=len(models),
+               frameon=False, fontsize=10, handlelength=1.2, handletextpad=0.4, columnspacing=1.2)
     fig.tight_layout()
     for ext in ("svg", "png"):
         fig.savefig(os.path.join(C.FIG_DIR, f"figure6_rev2_noise.{ext}"), dpi=150, bbox_inches="tight")
