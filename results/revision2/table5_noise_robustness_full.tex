@@ -1,0 +1,16 @@
+\begin{table}
+\caption{%RMSE under AWGN applied to the initial observation/warm-up window, all architectures (incl. DLinear/NLinear), seed-42 test split, no retraining.}
+\label{tab:noise_full}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & Koopman & GRU & LSTM & BiLSTM & MLP & AR(20) & DLinear & NLinear \\
+SNR &  &  &  &  &  &  &  &  \\
+\midrule
+Clean & 17.500000 & 60.900000 & 96.800000 & 77.200000 & 132.800000 & 34.500000 & 3.000000 & 3.600000 \\
+30 dB & 19.800000 & 61.800000 & 106.200000 & 76.600000 & 102.500000 & 204.200000 & 19.500000 & 61.400000 \\
+20 dB & 22.100000 & 60.400000 & 100.400000 & 79.800000 & 131.200000 & 492.000000 & 64.100000 & 195.200000 \\
+10 dB & 30.900000 & 61.100000 & 111.600000 & 82.900000 & 220.200000 & 1931.200000 & 191.700000 & 561.400000 \\
+5 dB & 41.700000 & 62.200000 & 105.200000 & 84.400000 & 264.700000 & 2966.800000 & 333.700000 & 1029.200000 \\
+\bottomrule
+\end{tabular}
+\end{table}
