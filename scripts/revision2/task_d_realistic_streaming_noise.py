@@ -184,7 +184,7 @@ def main():
                 fmt="s--", color=ps, lw=2, capsize=4, label=f"Streaming re-anchor (K={K_REANCHOR})")
     ax.set_xticks(x); ax.set_xticklabels(labels)
     ax.set_ylabel("%RMSE"); ax.set_xlabel("Noise level (SNR)")
-    ax.set_title("(a) %RMSE vs. noise"); ax.legend(fontsize=10)
+    ax.set_title("(a)", fontsize=12, loc="left"); ax.legend(fontsize=10)
     ax.grid(axis="y", alpha=0.3)
 
     ax = axes[1]
@@ -193,11 +193,9 @@ def main():
     ax.axhline(0, color="#888", ls=":", lw=0.8)
     ax.set_xticks(x); ax.set_xticklabels(labels)
     ax.set_ylabel(r"$R^2$"); ax.set_xlabel("Noise level (SNR)")
-    ax.set_title(r"(b) $R^2$ vs. noise"); ax.legend(fontsize=10)
+    ax.set_title("(b)", fontsize=12, loc="left"); ax.legend(fontsize=10)
     ax.grid(axis="y", alpha=0.3)
 
-    fig.suptitle("Koopman robustness: realistic IC corruption vs. streaming re-anchoring "
-                 "(no retraining)", fontsize=12, y=1.02)
     fig.tight_layout()
     for ext in ("svg", "png"):
         fig.savefig(os.path.join(C.FIG_DIR, f"figureS_realistic_streaming_noise.{ext}"),
