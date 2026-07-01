@@ -11,6 +11,7 @@ min / mean / SD plus a histogram.
 Outputs:
   results/lhs_distance_check.json
   figures/lhs_distances.png
+  figures/lhs_distances.svg
 """
 import os, json
 import numpy as np
@@ -115,11 +116,11 @@ with open(os.path.join(RESULT_DIR, "lhs_distance_check.json"), "w") as f:
 print(f"\nSaved -> results/lhs_distance_check.json")
 
 # ── figure ────────────────────────────────────────────────────────────────────
-pal = sns.color_palette("colorblind")
-plt.rcParams.update({
-    "font.size": 12, "axes.labelsize": 13, "axes.titlesize": 13,
-    "xtick.labelsize": 11, "ytick.labelsize": 11
-})
+HEX_PAL = ["#dda251", "#5a286b", "#646464", "#ac4484"]
+sns.set_theme("paper")
+sns.set_style("white")
+sns.set_context("notebook", font_scale=1.1)
+pal = HEX_PAL
 
 fig, axes = plt.subplots(1, 3, figsize=(12, 4), sharey=False)
 
@@ -142,5 +143,6 @@ fig.suptitle("LHS Parameter-Space Coverage: Pairwise Distance Distribution",
              fontsize=13, y=1.02)
 plt.tight_layout()
 fig.savefig(os.path.join(FIG_DIR, "lhs_distances.png"), dpi=150, bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "lhs_distances.svg"), format="svg", bbox_inches="tight")
 plt.close(fig)
-print("Saved -> figures/lhs_distances.png")
+print("Saved -> figures/lhs_distances.png + lhs_distances.svg")

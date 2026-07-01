@@ -1,0 +1,23 @@
+\begin{table}
+\caption{Noise robustness of all architectures under additive white Gaussian noise (AWGN) applied to the initial state. Models were not retrained. Values are mean $\pm$ 95\% CI across $B=50$ test trajectories.}
+\label{tab:noise_robustness}
+\begin{tabular}{llrrrrrr}
+\toprule
+ &  & Koopman & GRU & LSTM & BiLSTM & MLP & AR(20) \\
+Metric & SNR Level &  &  &  &  &  &  \\
+\midrule
+\multirow[t]{5}{*}{%RMSE (mean ± 95% CI)} & Clean & 17.5 ± 1.5 & 60.9 ± 3.2 & 96.8 ± 11.1 & 77.2 ± 7.6 & 132.8 ± 55.2 & 34.5 ± 1.1 \\
+ & 30 dB & 19.8 ± 1.8 & 61.8 ± 3.4 & 106.2 ± 11.0 & 76.6 ± 7.8 & 102.5 ± 49.9 & 204.2 ± 45.2 \\
+ & 20 dB & 22.1 ± 2.1 & 60.4 ± 3.3 & 100.4 ± 10.5 & 79.8 ± 7.0 & 131.2 ± 57.7 & 492.0 ± 118.5 \\
+ & 10 dB & 30.9 ± 2.8 & 61.1 ± 3.4 & 111.6 ± 10.4 & 82.9 ± 6.7 & 220.2 ± 68.4 & 1931.2 ± 561.9 \\
+ & 5 dB & 41.7 ± 2.9 & 62.2 ± 3.3 & 105.2 ± 11.9 & 84.4 ± 7.6 & 264.7 ± 81.9 & 2966.8 ± 854.2 \\
+\cline{1-8}
+\multirow[t]{5}{*}{R² (mean ± 95% CI)} & Clean & 0.69 ± 0.03 & -0.34 ± 0.07 & -0.57 ± 0.11 & -0.26 ± 0.07 & -17.73 ± 10.46 & 0.33 ± 0.01 \\
+ & 30 dB & 0.60 ± 0.04 & -0.32 ± 0.07 & -0.64 ± 0.11 & -0.22 ± 0.06 & -12.73 ± 9.38 & 0.17 ± 0.05 \\
+ & 20 dB & 0.53 ± 0.06 & -0.27 ± 0.08 & -0.64 ± 0.10 & -0.29 ± 0.07 & -16.99 ± 10.16 & -0.97 ± 0.59 \\
+ & 10 dB & 0.28 ± 0.10 & -0.39 ± 0.08 & -0.71 ± 0.11 & -0.38 ± 0.07 & -37.14 ± 15.97 & -16.06 ± 7.25 \\
+ & 5 dB & -0.07 ± 0.12 & -0.42 ± 0.07 & -0.64 ± 0.09 & -0.37 ± 0.07 & -42.47 ± 17.48 & -40.25 ± 12.78 \\
+\cline{1-8}
+\bottomrule
+\end{tabular}
+\end{table}

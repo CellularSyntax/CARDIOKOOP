@@ -10,6 +10,7 @@ Evaluates %RMSE and R2 at each SNR vs. clean baseline.
 Outputs:
   results/noise_robustness.json
   results/figures/noise_robustness.png
+  results/figures/noise_robustness.svg
 """
 import os, glob, re, json
 import numpy as np
@@ -162,11 +163,11 @@ with open(os.path.join(RESULT_DIR, "noise_robustness.json"), "w") as f:
 print("Saved -> results/noise_robustness.json")
 
 # ── figure ────────────────────────────────────────────────────────────────────
-pal = sns.color_palette("colorblind")
-plt.rcParams.update({
-    "font.size": 12, "axes.labelsize": 13, "axes.titlesize": 13,
-    "xtick.labelsize": 11, "ytick.labelsize": 11
-})
+HEX_PAL = ["#dda251", "#5a286b", "#646464", "#ac4484"]
+sns.set_theme("paper")
+sns.set_style("white")
+sns.set_context("notebook", font_scale=1.1)
+pal = HEX_PAL
 
 snr_vals = [float("inf")] + [float(s) for s in SNR_DB]   # inf = clean
 labels   = ["Clean"] + [f"{s} dB" for s in SNR_DB]
@@ -205,5 +206,6 @@ ax.grid(axis="y", alpha=0.3)
 plt.suptitle("Koopman Model: Noise Robustness (no retraining)", fontsize=13)
 plt.tight_layout()
 fig.savefig(os.path.join(FIG_DIR, "noise_robustness.png"), dpi=150, bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "noise_robustness.svg"), format="svg", bbox_inches="tight")
 plt.close(fig)
-print("Saved -> figures/noise_robustness.png")
+print("Saved -> figures/noise_robustness.png + noise_robustness.svg")
