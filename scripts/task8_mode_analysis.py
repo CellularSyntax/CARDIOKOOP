@@ -17,6 +17,7 @@ Outputs:
   results/mode_frequencies.json
   results/mode_ablation.json
   results/figures/mode_ablation.png
+  results/figures/mode_ablation.svg
 """
 import os, glob, re, json, sys
 import numpy as np
@@ -230,11 +231,11 @@ with open(os.path.join(RESULT_DIR, "mode_ablation.json"), "w") as f:
 print("Saved -> results/mode_ablation.json")
 
 # ── figure ────────────────────────────────────────────────────────────────────
-pal = sns.color_palette("colorblind")
-plt.rcParams.update({
-    "font.size": 12, "axes.labelsize": 13, "axes.titlesize": 13,
-    "xtick.labelsize": 11, "ytick.labelsize": 11
-})
+HEX_PAL = ["#dda251", "#5a286b", "#646464", "#ac4484"]
+sns.set_theme("paper")
+sns.set_style("white")
+sns.set_context("notebook", font_scale=1.1)
+pal = HEX_PAL
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
@@ -282,5 +283,6 @@ plt.suptitle(f"Koopman Mode Analysis (baseline %RMSE = {baseline_pct:.2f}%)",
 plt.tight_layout()
 fig.savefig(os.path.join(FIG_DIR, "mode_ablation.png"), dpi=150,
             bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "mode_ablation.svg"), format="svg", bbox_inches="tight")
 plt.close(fig)
-print("Saved -> figures/mode_ablation.png")
+print("Saved -> figures/mode_ablation.png + mode_ablation.svg")

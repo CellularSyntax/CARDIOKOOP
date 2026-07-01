@@ -1,0 +1,13 @@
+\begin{table}
+\caption{Nearest-neighbour distances in z-score-normalised 11-dimensional parameter space (Euclidean). All distances are well above zero, confirming absence of data leakage.}
+\label{tab:lhs_distances}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Comparison & n & Min & Q25 & Mean & SD & Q75 & Max \\
+\midrule
+Test vs. Train (nearest-neighbour) & 50 & 1.563000 & 1.905000 & 2.162000 & 0.319000 & 2.402000 & 2.767000 \\
+Val vs. Train (nearest-neighbour) & 50 & 1.404000 & 1.971000 & 2.193000 & 0.315000 & 2.353000 & 2.828000 \\
+Within Train (leave-one-out) & 400 & 1.234000 & 1.947000 & 2.168000 & 0.331000 & 2.391000 & 3.048000 \\
+\bottomrule
+\end{tabular}
+\end{table}

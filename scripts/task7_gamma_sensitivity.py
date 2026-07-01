@@ -19,6 +19,7 @@ Analysis:
 Outputs:
   results/gamma_sensitivity.json
   results/figures/gamma_sensitivity.png
+  results/figures/gamma_sensitivity.svg
 """
 import os, json
 import numpy as np
@@ -113,11 +114,11 @@ with open(os.path.join(RESULT_DIR, "gamma_sensitivity.json"), "w") as f:
 print("Saved -> results/gamma_sensitivity.json")
 
 # ── figure ────────────────────────────────────────────────────────────────────
-pal = sns.color_palette("colorblind")
-plt.rcParams.update({
-    "font.size": 12, "axes.labelsize": 13, "axes.titlesize": 13,
-    "xtick.labelsize": 11, "ytick.labelsize": 11
-})
+HEX_PAL = ["#dda251", "#5a286b", "#646464", "#ac4484"]
+sns.set_theme("paper")
+sns.set_style("white")
+sns.set_context("notebook", font_scale=1.1)
+pal = HEX_PAL
 
 fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -156,5 +157,6 @@ ax.text(0.98, 0.97,
 plt.tight_layout()
 fig.savefig(os.path.join(FIG_DIR, "gamma_sensitivity.png"), dpi=150,
             bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "gamma_sensitivity.svg"), format="svg", bbox_inches="tight")
 plt.close(fig)
-print("Saved -> figures/gamma_sensitivity.png")
+print("Saved -> figures/gamma_sensitivity.png + gamma_sensitivity.svg")

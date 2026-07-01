@@ -80,34 +80,54 @@ def main(argv=None):
     X_rs = X.reshape(B, T, -1)
     U_rs = U.reshape(B, T, -1)
 
-    # vectorised rollout
+    # vectorised batch rollout
     def rollout_batch(enc, dec, get_omegas, advance, x0, u):
+        """x0: (B,D)  u: (T,B,Du)  returns (T,B,D)"""
         y = enc(x0); outs = []
         for t in range(u.size(0)):
             outs.append(dec(y))
             y = advance(y, get_omegas(y), u[t])
-        return torch.stack(outs, 0)   # (T,B,D)
+        return torch.stack(outs, 0)
 
     x0   = torch.tensor(X_rs[:, 0, :], dtype=torch.float32, device=device)
     uSeq = torch.tensor(U_rs, dtype=torch.float32, device=device).permute(1, 0, 2)
 
+    # ── Time the batch rollout (matches production deployment) ────────────────
+    # Warm-up pass to avoid cold-start GPU overhead
+    with torch.no_grad():
+        _ = rollout_batch(model.encoder, model.decoder,
+                          model.get_omegas, model._advance, x0, uSeq)
+    if device.type == "cuda":
+        torch.cuda.synchronize()
+
+    # Timed pass
+    if device.type == "cuda":
+        torch.cuda.synchronize()
+    t_batch_start = time.time()
     with torch.no_grad():
         pred_norm = rollout_batch(model.encoder, model.decoder,
                                   model.get_omegas, model._advance,
-                                  x0, uSeq).cpu().numpy()
+                                  x0, uSeq).cpu().numpy()  # (T,B,D)
+    if device.type == "cuda":
+        torch.cuda.synchronize()
+    t_batch_total = time.time() - t_batch_start
 
-    preds = pred_norm.transpose(1, 0, 2) * sig_std + sig_mean
+    # Per-trajectory inference time (batch total / n_trajectories)
+    t_inf_per_traj = t_batch_total / B
+    t_inf = [t_inf_per_traj] * B
+    print(f"Batch rollout: {t_batch_total:.4f}s total, {t_inf_per_traj*1000:.3f}ms/trajectory")
+
+    preds = pred_norm.transpose(1, 0, 2) * sig_std + sig_mean  # (B,T,D)
     X_rs_denorm = X_rs * sig_std + sig_mean
 
-    # ── metrics ───────────────────────────────────────────────
+    # ── metrics ───────────────────────────────────────────────────────────────
     mse_sig = []; rmse_sig = []; pct_sig = []; r2_sig = []
     bias_sig = []; sigma_sig = []; dtw_traj = []; pct_flat = []
     pct_ps   = []; mse_traj  = []; rmse_traj = []; r2_traj = []
-    cum_pct  = []; t_inf = []
+    cum_pct  = []
 
     for i in range(B):
         seq, pred = X_rs_denorm[i], preds[i]
-        tic = time.time()
 
         err  = pred - seq
         mse  = (err ** 2).mean(0)
@@ -129,7 +149,6 @@ def main(argv=None):
             [fastdtw(seq[:, j], pred[:, j])[0] for j in range(seq.shape[1])]))
         cum_pct.append(np.cumsum(
             100 * np.sqrt(((seq - pred)**2).mean(1)) / (np.ptp(seq) + 1e-8)))
-        t_inf.append(time.time() - tic)
 
     # global flattened RMSE
     seq_all  = X_rs_denorm.reshape(-1, X_rs_denorm.shape[2])

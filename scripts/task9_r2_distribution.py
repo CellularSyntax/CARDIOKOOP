@@ -10,6 +10,7 @@ from the postprocessing pickles and:
 Outputs:
   results/r2_per_trajectory.json
   results/figures/r2_distribution.png
+  results/figures/r2_distribution.svg
 """
 import os, json, pickle
 import numpy as np
@@ -66,11 +67,11 @@ with open(os.path.join(RESULT_DIR, "r2_per_trajectory.json"), "w") as f:
 print("Saved -> results/r2_per_trajectory.json")
 
 # ── figure ─────────────────────────────────────────────────────────────────────
-pal = sns.color_palette("colorblind")
-plt.rcParams.update({
-    "font.size": 12, "axes.labelsize": 13, "axes.titlesize": 13,
-    "xtick.labelsize": 11, "ytick.labelsize": 11
-})
+HEX_PAL = ["#dda251", "#5a286b", "#646464", "#ac4484"]
+sns.set_theme("paper")
+sns.set_style("white")
+sns.set_context("notebook", font_scale=1.1)
+pal = HEX_PAL
 
 fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
 
@@ -128,5 +129,6 @@ plt.suptitle("Per-Trajectory R² Distributions (Test Set)", fontsize=13)
 plt.tight_layout()
 fig.savefig(os.path.join(FIG_DIR, "r2_distribution.png"), dpi=150,
             bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "r2_distribution.svg"), format="svg", bbox_inches="tight")
 plt.close(fig)
-print("Saved -> figures/r2_distribution.png")
+print("Saved -> figures/r2_distribution.png + r2_distribution.svg")

@@ -14,6 +14,7 @@ Optuna objective is the validation %RMSE (stored in column 'Value').
 Outputs:
   results/latent_ablation.json
   results/figures/latent_ablation.png
+  results/figures/latent_ablation.svg
 """
 import os, json
 import numpy as np
@@ -107,11 +108,11 @@ with open(os.path.join(RESULT_DIR, "latent_ablation.json"), "w") as f:
 print("\nSaved -> results/latent_ablation.json")
 
 # ── figure ────────────────────────────────────────────────────────────────────
-pal = sns.color_palette("colorblind")
-plt.rcParams.update({
-    "font.size": 12, "axes.labelsize": 13, "axes.titlesize": 13,
-    "xtick.labelsize": 11, "ytick.labelsize": 11
-})
+HEX_PAL = ["#dda251", "#5a286b", "#646464", "#ac4484"]
+sns.set_theme("paper")
+sns.set_style("white")
+sns.set_context("notebook", font_scale=1.1)
+pal = HEX_PAL
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
@@ -166,5 +167,6 @@ plt.suptitle("Latent Dimensionality Ablation (from Optuna search, 301 trials)",
 plt.tight_layout()
 fig.savefig(os.path.join(FIG_DIR, "latent_ablation.png"), dpi=150,
             bbox_inches="tight")
+fig.savefig(os.path.join(FIG_DIR, "latent_ablation.svg"), format="svg", bbox_inches="tight")
 plt.close(fig)
-print("Saved -> figures/latent_ablation.png")
+print("Saved -> figures/latent_ablation.png + latent_ablation.svg")
