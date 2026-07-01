@@ -1,0 +1,15 @@
+\begin{table}
+\caption{Effect of the control-net output activation. 'swap' = the deployed control net evaluated with a different output activation (inference only); 'retrain' = only the control net retrained under each activation on a frozen Koopman backbone. Seed-42 test split. Zero-centred activations (tanh, identity) are stable; ReLU/sigmoid diverge.}
+\label{tab:control_activation}
+\begin{tabular}{lrrlrrl}
+\toprule
+ & swap_%RMSE & swap_R2 & swap_status & retrain_%RMSE & retrain_R2 & retrain_status \\
+activation &  &  &  &  &  &  \\
+\midrule
+tanh & 17.540000 & 0.691000 & stable & 45.040000 & 0.347000 & stable \\
+relu & 51.370000 & -4.165000 & stable & diverged & NaN & diverged \\
+sigmoid & diverged & NaN & diverged & diverged & NaN & diverged \\
+identity & 15.940000 & 0.618000 & stable & 42.380000 & 0.445000 & stable \\
+\bottomrule
+\end{tabular}
+\end{table}
