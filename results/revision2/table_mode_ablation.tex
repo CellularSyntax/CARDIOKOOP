@@ -1,0 +1,14 @@
+\begin{table}
+\caption{Per-mode ablation of the learned Koopman operator on the seed-42 test split. Each complex eigenpair is zeroed in the latent advance and the full 1499-step forecast is re-run (no retraining). Baseline (no ablation) \%RMSE = 17.54. The dominant cardiac mode CP-3 ($|f|\approx1.77$ Hz) accounts for $+16.4$ pp.}
+\label{tab:mode_ablation}
+\begin{tabular}{llrrrrrr}
+\toprule
+Rank & Mode & |f| (Hz) & Period (s) & Latent variance & %RMSE (ablated) & Delta %RMSE (pp) & Delta %RMSE (rel. %) \\
+\midrule
+1 & CP-3 & 1.774000 & 0.564000 & 0.314800 & 33.910000 & 16.380000 & 93.400000 \\
+2 & CP-2 & 0.004000 & 235.946000 & 0.037800 & 21.140000 & 3.610000 & 20.600000 \\
+3 & CP-1 & 0.010000 & 104.376000 & 0.029600 & 19.930000 & 2.390000 & 13.700000 \\
+4 & CP-0 & 1.868000 & 0.535000 & 0.029800 & 19.470000 & 1.930000 & 11.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
