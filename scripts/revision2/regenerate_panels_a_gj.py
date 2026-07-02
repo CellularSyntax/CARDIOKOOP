@@ -38,7 +38,7 @@ _pal = dict(zip(models_all, custom_palette))
 ylab = C.YLAB
 SIG_G = [2, 7, 8, 10, 11]
 ylab_g = [ylab[i] for i in SIG_G]
-R2_CLIP = -3.0
+R2_CLIP = -1.0   # violin (panel g) floor; MLP is the only model below and is μ-labelled
 x_labels = ["Clean", "30 dB", "20 dB", "10 dB", "5 dB"]
 x_pos = np.arange(len(x_labels))
 lw_koop, lw_bl = 2.8, 1.7
@@ -113,7 +113,7 @@ def panel_a(true, pred, models, out_stub):
             ax = axes[r, c]
             ax.plot(y, "k", lw=1.6, label="Ground Truth")
             nu.coloured_pred(ax, y, pred[m][i][:, plv], plt.get_cmap("plasma"), norm)
-            ax.axvline(500, color="k", ls=":", lw=1.2)
+            ax.axvline(500, color="k", ls="--", lw=2.6)
             if r == 0:
                 ax.set_title(m, fontsize=16)
             if c == 0:
@@ -195,7 +195,10 @@ def panels_gj(true, pred, curve_data, models, out_stub):
     ax2.set_yscale("log"); ax2.set_xticks(x_pos); ax2.set_xticklabels(x_labels, fontsize=13)
     ax2.set_xlabel("Input Noise Level (SNR)", fontsize=14); ax2.set_ylabel("%RMSE (log scale)", fontsize=14)
     ax2.tick_params(labelsize=13); ax2.yaxis.grid(True, which="both", linestyle="--", alpha=0.3)
-    ax2.set_axisbelow(True); ax2.legend(fontsize=9.5, frameon=True, loc="upper left", ncol=2)
+    ax2.set_axisbelow(True)
+    ymax_i = max((curve_data[m][0] + curve_data[m][1]).max() for m in models_all)
+    ax2.set_ylim(top=ymax_i * 15)   # headroom so the legend clears the curves
+    ax2.legend(fontsize=9.5, frameon=True, loc="upper left", ncol=2)
 
     # (j) R² vs SNR heatmap
     ax3 = fig.add_subplot(gs[3])

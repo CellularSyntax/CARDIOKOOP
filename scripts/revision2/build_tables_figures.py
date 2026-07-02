@@ -165,69 +165,84 @@ def make_figure5(models, results, speedup, nparams, pal, out_stub, speedup_label
     canonical colour regardless of which roster it appears in.
     ``speedup_labels`` toggles the "379.2x"-style text labels above panel (e).
     """
-    fig = plt.figure(figsize=(27, 4.4))
+    AXLAB, TICK, MODTICK = 17, 15, 13   # axis-label / tick / rotated-model-name font sizes
+    fig = plt.figure(figsize=(27, 5.0))
     gs = GridSpec(1, 5, width_ratios=[6, 3, 4, 3, 3], figure=fig)
 
     SIG_MAIN = [2, 7, 8, 10, 11]
+    from matplotlib.patches import Patch
     ax0 = fig.add_subplot(gs[0])
     w = 0.8 / len(models)
     xm = np.arange(len(SIG_MAIN))
-    for i, m in enumerate(models):
-        means = results[m]["pct_mean"][SIG_MAIN]
-        ax0.bar(xm + i * w, means, w, label=m, color=pal[m])
-    ax0.set_yscale("log"); ax0.set_ylim(bottom=0.3)
+    # within each signal group, order the bars ascending by %RMSE (best -> worst)
+    for gi, j in enumerate(SIG_MAIN):
+        order_m = sorted(models, key=lambda mm: results[mm]["pct_mean"][j])
+        for slot, m in enumerate(order_m):
+            ax0.bar(gi + slot * w, results[m]["pct_mean"][j], w, color=pal[m])
+    ax0.set_yscale("log")
+    bmax = max(results[m]["pct_mean"][j] for m in models for j in SIG_MAIN)
+    ax0.set_ylim(bottom=0.3, top=bmax * 22)   # headroom to fit the legend inside
     ax0.set_xticks(xm + w * (len(models) - 1) / 2)
-    ax0.set_xticklabels([C.YLAB[i] for i in SIG_MAIN], fontsize=12)
-    ax0.set_ylabel("%RMSE (log)", fontsize=13)
+    ax0.set_xticklabels([C.YLAB[i] for i in SIG_MAIN], fontsize=TICK + 1)
+    ax0.set_ylabel("%RMSE (log)", fontsize=AXLAB)
+    ax0.tick_params(axis="y", labelsize=TICK)
     ax0.grid(axis="y", which="both", ls="--", alpha=0.3); ax0.set_axisbelow(True)
+    handles = [Patch(facecolor=pal[m], label=m) for m in models]
+    ax0.legend(handles=handles, loc="upper center", ncol=(len(models) + 1) // 2, fontsize=TICK - 2,
+               frameon=True, handlelength=1.2, handletextpad=0.4, columnspacing=1.0)
 
     ax1 = fig.add_subplot(gs[1])
     for m in models:
         inf = results[m]["inference_times_s"].mean()
         ax1.scatter(inf, results[m]["pct_per_traj_ps"].mean(),
-                    s=110 if m == "Koopman" else 60, color=pal[m],
+                    s=130 if m == "Koopman" else 70, color=pal[m],
                     marker="*" if m == "Koopman" else "o")
     ax1.set_xscale("log"); ax1.set_yscale("log")
-    ax1.set_xlabel("Inference time (s, log)", fontsize=12)
-    ax1.set_ylabel("Avg %RMSE (log)", fontsize=12)
+    ax1.set_xlabel("Inference time (s, log)", fontsize=AXLAB)
+    ax1.set_ylabel("Avg %RMSE (log)", fontsize=AXLAB)
+    ax1.tick_params(labelsize=TICK)
     ax1.grid(True, which="both", ls="--", alpha=0.3); ax1.set_axisbelow(True)
 
     ax2 = fig.add_subplot(gs[2])
     for m in models:
         cum = results[m]["cumulative_pct_per_traj"]
-        ax2.plot(np.nanmean(cum, axis=0), color=pal[m], lw=2)
+        ax2.plot(np.nanmean(cum, axis=0), color=pal[m], lw=2, label=m)
     ax2.set_yscale("log")
-    ax2.set_xlabel("Time step", fontsize=12); ax2.set_ylabel("Cumulative %RMSE (log)", fontsize=12)
+    ax2.set_xticks([0, 500, 1000, 1500])     # sparser time-step ticks -> room for larger font
+    ax2.set_xlabel("Time step", fontsize=AXLAB); ax2.set_ylabel("Cumulative %RMSE (log)", fontsize=AXLAB)
+    ax2.tick_params(labelsize=TICK)
     ax2.grid(True, which="both", ls="--", alpha=0.3)
+    ax2.legend(loc="lower right", ncol=(len(models) + 1) // 2, fontsize=TICK - 3,
+               frameon=True, handlelength=1.2, handletextpad=0.4, columnspacing=1.0)
 
     # (e) speed-up vs the ODE simulator (log), sorted descending, labelled
     ax3 = fig.add_subplot(gs[3])
     spd = sorted([(m, speedup[m]) for m in models], key=lambda kv: kv[1], reverse=True)
     ax3.bar(range(len(spd)), [v for _, v in spd], color=[pal[m] for m, _ in spd])
     ax3.set_yscale("log")
-    ax3.set_ylim(top=max(v for _, v in spd) * (6 if speedup_labels else 2))
+    # extra headroom when labels are off, so the speed-up factors can be added
+    # manually in large font above the bars
+    ax3.set_ylim(top=max(v for _, v in spd) * (6 if speedup_labels else 25))
     if speedup_labels:
         for i, (m, v) in enumerate(spd):
             ax3.text(i, v * 1.35, f"{v:.1f}x", ha="center", va="bottom", fontsize=7.5, rotation=90)
-    ax3.set_ylabel("Speed-up vs. sim (log)", fontsize=12)
+    ax3.set_ylabel("Speed-up vs. sim (log)", fontsize=AXLAB)
     ax3.set_xticks(range(len(spd)))
-    ax3.set_xticklabels([m for m, _ in spd], rotation=40, ha="right", fontsize=9)
+    ax3.set_xticklabels([m for m, _ in spd], rotation=40, ha="right", fontsize=MODTICK)
+    ax3.tick_params(axis="y", labelsize=TICK)
     ax3.grid(axis="y", which="both", ls="--", alpha=0.3); ax3.set_axisbelow(True)
 
     # (f) model size (parameter count, log), sorted smallest -> largest
     ax4 = fig.add_subplot(gs[4])
     order = sorted(models, key=lambda m: nparams[m])
     ax4.bar(range(len(order)), [nparams[m] for m in order], color=[pal[m] for m in order])
-    ax4.set_yscale("log"); ax4.set_ylabel("Parameters (log)", fontsize=12)
+    ax4.set_yscale("log"); ax4.set_ylabel("Parameters (log)", fontsize=AXLAB)
     ax4.set_xticks(range(len(order)))
-    ax4.set_xticklabels(order, rotation=40, ha="right", fontsize=9)
+    ax4.set_xticklabels(order, rotation=40, ha="right", fontsize=MODTICK)
+    ax4.tick_params(axis="y", labelsize=TICK)
     ax4.grid(axis="y", which="both", ls="--", alpha=0.3); ax4.set_axisbelow(True)
 
-    # single-row shared legend on top of the figure (no per-panel legends)
-    handles, labels = ax0.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, 1.0),
-               ncol=len(models), frameon=False, fontsize=11,
-               handlelength=1.2, handletextpad=0.4, columnspacing=1.2)
+    # legends now live inside panels (b) and (d); no shared top legend
     fig.tight_layout()
     for ext in ("svg", "png"):
         fig.savefig(os.path.join(C.FIG_DIR, f"{out_stub}.{ext}"),
