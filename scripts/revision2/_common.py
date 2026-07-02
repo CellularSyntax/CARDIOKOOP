@@ -60,6 +60,13 @@ SIG_NAMES = ['P_ra', 'V_ra', 'P_rv', 'V_rv', 'P_vp', 'P_la', 'V_la', 'P_lv',
 MODELS_ALL   = ['Koopman', 'GRU', 'LSTM', 'BiLSTM', 'MLP', 'AR(20)', 'DLinear', 'NLinear']
 PALETTE_HEX  = ["#dda251", "#5a286b", "#646464", "#ac4484", "#2e7ec0", "#4caf50",
                 "#e15759", "#17becf"]
+# Reduced roster for the (otherwise crowded) main-text Figure 5: the method, one
+# RNN representative (GRU -- the strongest of GRU/LSTM/BiLSTM), BOTH reviewer-
+# requested linear baselines (DLinear/NLinear), the naive MLP anchor, and the
+# classical AR(20) anchor.  The full 8-model comparison lives in the supplement
+# (Figure S9).  Colours are looked up from PALETTE_HEX by name, so a model keeps
+# the same colour whether it appears in the 6-model or 8-model figure.
+MODELS_MAIN  = ['Koopman', 'GRU', 'DLinear', 'NLinear', 'MLP', 'AR(20)']
 
 if SRC_DIR not in os.sys.path:
     os.sys.path.insert(0, SRC_DIR)
