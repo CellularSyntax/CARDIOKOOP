@@ -96,20 +96,20 @@ def _r2_per_sig(true_phys, pred_phys):
     return (1.0 - ss_res / ss_tot).mean(0)
 
 
-def panel_a(true, pred):
+def panel_a(true, pred, models, out_stub):
     rmse = np.sqrt(((true - pred["Koopman"]) ** 2).mean(axis=(1, 2)))
     idxs = np.argsort(rmse)[[0, -1]]
     plv = 7
-    n_cols = len(models_all)
+    n_cols = len(models)
     fig, axes = plt.subplots(2, n_cols, figsize=(n_cols * 4.0, 4.5))
     axes = np.atleast_2d(axes)
     plt.subplots_adjust(left=0.05, right=0.94, hspace=0.35, wspace=0.22)
     for r, i in enumerate(idxs):
         y = true[i][:, plv]
-        errs = [np.abs(pred[m][i][:, plv] - y) for m in models_all]
+        errs = [np.abs(pred[m][i][:, plv] - y) for m in models]
         vmax = np.max([e.max() for e in errs]) + 1e-12
         norm = colors.Normalize(vmin=0, vmax=vmax)
-        for c, m in enumerate(models_all):
+        for c, m in enumerate(models):
             ax = axes[r, c]
             ax.plot(y, "k", lw=1.6, label="Ground Truth")
             nu.coloured_pred(ax, y, pred[m][i][:, plv], plt.get_cmap("plasma"), norm)
@@ -127,12 +127,13 @@ def panel_a(true, pred):
                      ).ax.set_ylabel("|err|", fontsize=15)
     axes[0, -1].legend(frameon=False, fontsize=11, loc="lower left", bbox_to_anchor=(1.01, 1.02))
     for ext in ("svg", "png"):
-        fig.savefig(os.path.join(FIGDIR, f"figure5a_rev2.{ext}"), dpi=150, bbox_inches="tight")
+        fig.savefig(os.path.join(FIGDIR, f"{out_stub}.{ext}"), dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print("Saved -> figures/figure5a_rev2.svg + .png")
+    print(f"Saved -> figures/{out_stub}.svg + .png ({len(models)} models)")
 
 
-def panels_gj(true, pred, curve_data):
+def panels_gj(true, pred, curve_data, models, out_stub):
+    models_all = models          # roster for this figure; _pal (module-level) stays keyed to all 8
     r2_traj_all = {m: _r2_per_traj(true, pred[m]) for m in models_all}
     r2_sig_all = {m: _r2_per_sig(true, pred[m]) for m in models_all}
     _df_violin = pd.concat(
@@ -217,17 +218,21 @@ def panels_gj(true, pred, curve_data):
 
     plt.tight_layout()
     for ext in ("svg", "png"):
-        fig.savefig(os.path.join(FIGDIR, f"figure5_panels_gj_rev2.{ext}"), dpi=150, bbox_inches="tight")
+        fig.savefig(os.path.join(FIGDIR, f"{out_stub}.{ext}"), dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print("Saved -> figures/figure5_panels_gj_rev2.svg + .png")
+    print(f"Saved -> figures/{out_stub}.svg + .png ({len(models)} models)")
 
 
 def main():
     C.set_all_seeds(C.SEED)
     true, pred = assemble_predictions()
     curve_data = build_curve_data()
-    panel_a(true, pred)
-    panels_gj(true, pred, curve_data)
+    # reduced 6-model roster -> main-text Figure 5 panels
+    panel_a(true, pred, C.MODELS_MAIN, "figure5a_rev2")
+    panels_gj(true, pred, curve_data, C.MODELS_MAIN, "figure5_panels_gj_rev2")
+    # full 8-model roster -> supplementary Figure S9 panels
+    panel_a(true, pred, C.MODELS_ALL, "figureS9a_full8")
+    panels_gj(true, pred, curve_data, C.MODELS_ALL, "figureS9_panels_gj_full8")
 
 
 if __name__ == "__main__":
