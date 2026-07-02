@@ -194,9 +194,13 @@ def make_figure5(models, results, speedup, nparams, pal, out_stub, speedup_label
     ax1 = fig.add_subplot(gs[1])
     for m in models:
         inf = results[m]["inference_times_s"].mean()
+        is_k = (m == "Koopman")
         ax1.scatter(inf, results[m]["pct_per_traj_ps"].mean(),
-                    s=130 if m == "Koopman" else 70, color=pal[m],
-                    marker="*" if m == "Koopman" else "o")
+                    s=430 if is_k else 70, color=pal[m],
+                    marker="*" if is_k else "o",
+                    edgecolors="black" if is_k else "none",
+                    linewidths=1.4 if is_k else 0,
+                    zorder=6 if is_k else 3)
     ax1.set_xscale("log"); ax1.set_yscale("log")
     ax1.set_xlabel("Inference time (s, log)", fontsize=AXLAB)
     ax1.set_ylabel("Avg %RMSE (log)", fontsize=AXLAB)
@@ -206,7 +210,9 @@ def make_figure5(models, results, speedup, nparams, pal, out_stub, speedup_label
     ax2 = fig.add_subplot(gs[2])
     for m in models:
         cum = results[m]["cumulative_pct_per_traj"]
-        ax2.plot(np.nanmean(cum, axis=0), color=pal[m], lw=2, label=m)
+        is_k = (m == "Koopman")
+        ax2.plot(np.nanmean(cum, axis=0), color=pal[m],
+                 lw=3.6 if is_k else 1.9, label=m, zorder=6 if is_k else 3)
     ax2.set_yscale("log")
     ax2.set_xticks([0, 500, 1000, 1500])     # sparser time-step ticks -> room for larger font
     ax2.set_xlabel("Time step", fontsize=AXLAB); ax2.set_ylabel("Cumulative %RMSE (log)", fontsize=AXLAB)

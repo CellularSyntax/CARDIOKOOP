@@ -188,10 +188,12 @@ def panels_gj(true, pred, curve_data, models, out_stub):
     ax2 = fig.add_subplot(gs[2])
     for m in models_all:
         pm, pc, rm, rc = curve_data[m]
-        lw = lw_koop if m == "Koopman" else lw_bl
-        ms = 7 if m == "Koopman" else 5
-        ax2.fill_between(x_pos, np.clip(pm - pc, 1e-3, None), pm + pc, color=_pal[m], alpha=0.15)
-        ax2.plot(x_pos, pm, color=_pal[m], linewidth=lw, marker="o", markersize=ms, label=m)
+        is_k = (m == "Koopman")
+        lw = 3.6 if is_k else lw_bl
+        ms = 9 if is_k else 5
+        z = 6 if is_k else 3
+        ax2.fill_between(x_pos, np.clip(pm - pc, 1e-3, None), pm + pc, color=_pal[m], alpha=0.15, zorder=z - 1)
+        ax2.plot(x_pos, pm, color=_pal[m], linewidth=lw, marker="o", markersize=ms, label=m, zorder=z)
     ax2.set_yscale("log"); ax2.set_xticks(x_pos); ax2.set_xticklabels(x_labels, fontsize=13)
     ax2.set_xlabel("Input Noise Level (SNR)", fontsize=14); ax2.set_ylabel("%RMSE (log scale)", fontsize=14)
     ax2.tick_params(labelsize=13); ax2.yaxis.grid(True, which="both", linestyle="--", alpha=0.3)
