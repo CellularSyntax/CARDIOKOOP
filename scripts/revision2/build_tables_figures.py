@@ -155,7 +155,7 @@ def linear_awgn_curve(name, Xn, Xte_phys, s_std, sig_mean, sig_std, sig_power, r
     return rec
 
 
-def make_figure5(models, results, speedup, nparams, pal, out_stub):
+def make_figure5(models, results, speedup, nparams, pal, out_stub, speedup_labels=True):
     """
     Figure-5 comparison panels (b) %RMSE per signal, (c) accuracy vs inference,
     (d) cumulative error, (e) speed-up, (f) model size -- rendered for an
@@ -163,6 +163,7 @@ def make_figure5(models, results, speedup, nparams, pal, out_stub):
     (main text) and once with the full 8-model roster (supplement, Figure S9).
     Colours come from ``pal`` (keyed by model name) so every model keeps its
     canonical colour regardless of which roster it appears in.
+    ``speedup_labels`` toggles the "379.2x"-style text labels above panel (e).
     """
     fig = plt.figure(figsize=(27, 4.4))
     gs = GridSpec(1, 5, width_ratios=[6, 3, 4, 3, 3], figure=fig)
@@ -204,9 +205,10 @@ def make_figure5(models, results, speedup, nparams, pal, out_stub):
     spd = sorted([(m, speedup[m]) for m in models], key=lambda kv: kv[1], reverse=True)
     ax3.bar(range(len(spd)), [v for _, v in spd], color=[pal[m] for m, _ in spd])
     ax3.set_yscale("log")
-    ax3.set_ylim(top=max(v for _, v in spd) * 6)
-    for i, (m, v) in enumerate(spd):
-        ax3.text(i, v * 1.35, f"{v:.1f}x", ha="center", va="bottom", fontsize=7.5, rotation=90)
+    ax3.set_ylim(top=max(v for _, v in spd) * (6 if speedup_labels else 2))
+    if speedup_labels:
+        for i, (m, v) in enumerate(spd):
+            ax3.text(i, v * 1.35, f"{v:.1f}x", ha="center", va="bottom", fontsize=7.5, rotation=90)
     ax3.set_ylabel("Speed-up vs. sim (log)", fontsize=12)
     ax3.set_xticks(range(len(spd)))
     ax3.set_xticklabels([m for m, _ in spd], rotation=40, ha="right", fontsize=9)
@@ -327,7 +329,8 @@ def main():
 
     # ── Figure 5 (rev2): reduced 6-model main + full 8-model supplement ────────
     pal = dict(zip(C.MODELS_ALL, C.PALETTE_HEX))   # canonical per-model colours
-    make_figure5(C.MODELS_MAIN, results, speedup, nparams, pal, "figure5_rev2_comparison")
+    make_figure5(C.MODELS_MAIN, results, speedup, nparams, pal, "figure5_rev2_comparison",
+                 speedup_labels=False)
     make_figure5(C.MODELS_ALL,  results, speedup, nparams, pal, "figureS9_comparison_full8")
 
     # ── Table 5 + Figure 6: AWGN noise robustness, all 8 architectures ─────────
