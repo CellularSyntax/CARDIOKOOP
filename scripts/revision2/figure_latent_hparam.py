@@ -125,13 +125,11 @@ def main():
     ax3.set_xlabel("Control gain", fontsize=AXLAB)
     ax3.set_ylabel("Validation %RMSE", fontsize=AXLAB)
     ax3.tick_params(labelsize=TICK)
-    ax3.set_ylim(top=max(cv.max(), (bm + bsd).max()) * 1.18)  # headroom for legend + note
+    ax3.set_ylim(top=max(cv.max(), (bm + bsd).max()) * 1.12)  # headroom for the legend
     ax3.yaxis.grid(True, ls="--", alpha=0.3); ax3.set_axisbelow(True)
-    ax3.legend(fontsize=TICK - 1, frameon=True, framealpha=0.9, loc="upper left")
-    ax3.text(0.97, 0.05, f"insensitive across the search\nrange [{cg.min():.2f}, {cg.max():.2f}]",
-             transform=ax3.transAxes, ha="right", va="bottom", fontsize=TICK - 1,
-             style="italic", color="#444444",
-             bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#cccccc", alpha=0.88))
+    ax3.legend(fontsize=TICK - 1, frameon=True, framealpha=0.92, loc="upper left")
+    # (the flat binned mean shows the insensitivity; stated in the caption rather than
+    #  overlaid on the dense scatter)
     ax3.set_title("(c)", loc="left", fontsize=13)
 
     fig.tight_layout()
