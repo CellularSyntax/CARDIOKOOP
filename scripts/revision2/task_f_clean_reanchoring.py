@@ -72,21 +72,21 @@ def main():
     def score(pred_phys):
         pct = np.array([C.pct_rmse_ps(Xph[i], pred_phys[i]) for i in range(B)])
         r2 = np.array([C.r2_flat(Xph[i], pred_phys[i]) for i in range(B)])
-        return float(pct.mean()), float(C.ci95(pct)), float(r2.mean())
+        return float(pct.mean()), float(C.ci95(pct)), float(r2.mean()), float(C.ci95(r2))
 
     rows = []
     # open-loop free-running baseline (== manuscript Koopman row)
     pred_free = C.koopman_rollout(model, Xn[:, 0, :], Un, device=device) * sig_std + sig_mean
-    p, ci, r2 = score(pred_free)
+    p, ci, r2, r2ci = score(pred_free)
     rows.append({"reanchor_K_steps": "inf", "reanchor_interval_s": "inf",
-                 "pct_rmse_mean": p, "pct_rmse_ci95": ci, "r2_mean": r2})
+                 "pct_rmse_mean": p, "pct_rmse_ci95": ci, "r2_mean": r2, "r2_ci95": r2ci})
     print(f"Open-loop free-run:            %RMSE={p:6.2f} +- {ci:.2f}  R2={r2:.3f}")
 
     for K in K_GRID:
         pred = reanchor_rollout(model, Xn, Un, K, device) * sig_std + sig_mean
-        p, ci, r2 = score(pred)
+        p, ci, r2, r2ci = score(pred)
         rows.append({"reanchor_K_steps": K, "reanchor_interval_s": round(K * DT, 3),
-                     "pct_rmse_mean": p, "pct_rmse_ci95": ci, "r2_mean": r2})
+                     "pct_rmse_mean": p, "pct_rmse_ci95": ci, "r2_mean": r2, "r2_ci95": r2ci})
         print(f"Re-anchor K={K:4d} ({K*DT:.2f}s):        %RMSE={p:6.2f} +- {ci:.2f}  R2={r2:.3f}")
 
     out_csv = os.path.join(C.REV2_DIR, "task_f_clean_reanchoring.csv")
@@ -102,40 +102,50 @@ def main():
     pct = np.array([r["pct_rmse_mean"] for r in rows[1:]])
     pct_ci = np.array([r["pct_rmse_ci95"] for r in rows[1:]])
     r2 = np.array([r["r2_mean"] for r in rows[1:]])
-    c_koop, c_dl, c_nl = "#dda251", "#e15759", "#17becf"
+    r2_ci = np.array([r["r2_ci95"] for r in rows[1:]])
+    c_koop, c_dir, c_open = "#dda251", "#4caf50", "#5a286b"   # re-anchored / direct forecasters / open-loop
+    x_cyc = 1.0 / CARDIAC_HZ
+    AXLAB, TICK = 14, 12
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.6))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.7))
 
     # (a) %RMSE vs re-anchoring interval
-    ax1.errorbar(intervals_s, pct, yerr=pct_ci, fmt="o-", color=c_koop, lw=2.2,
-                 capsize=4, label="Koopman (re-anchored)")
-    ax1.axhline(KOOP_OPENLOOP, color=c_koop, ls=":", lw=1.6,
+    ax1.axhspan(DLINEAR_CLEAN, NLINEAR_CLEAN, color=c_dir, alpha=0.16)
+    ax1.axhline(DLINEAR_CLEAN, color=c_dir, ls="--", lw=1.3, alpha=0.6)
+    ax1.axhline(NLINEAR_CLEAN, color=c_dir, ls="--", lw=1.3, alpha=0.6,
+                label=f"DLinear/NLinear ({DLINEAR_CLEAN:.1f}–{NLINEAR_CLEAN:.1f}%)")
+    ax1.axhline(KOOP_OPENLOOP, color=c_open, ls=":", lw=2.2,
                 label=f"Koopman open-loop ({KOOP_OPENLOOP:.1f}%)")
-    ax1.axhline(DLINEAR_CLEAN, color=c_dl, ls="--", lw=1.4, alpha=0.9,
-                label=f"DLinear ({DLINEAR_CLEAN:.1f}%)")
-    ax1.axhline(NLINEAR_CLEAN, color=c_nl, ls="--", lw=1.4, alpha=0.9,
-                label=f"NLinear ({NLINEAR_CLEAN:.1f}%)")
-    ax1.axvline(1.0 / CARDIAC_HZ, color="#888", ls="-.", lw=1.0)
-    ax1.text(1.0 / CARDIAC_HZ * 1.05, ax1.get_ylim()[1], "~1 cardiac cycle",
-             rotation=90, va="top", ha="left", fontsize=8.5, color="#666")
+    ax1.fill_between(intervals_s, np.clip(pct - pct_ci, 1e-3, None), pct + pct_ci, color=c_koop, alpha=0.22)
+    ax1.plot(intervals_s, pct, "o-", color=c_koop, lw=2.8, ms=7, zorder=5, label="Koopman (re-anchored)")
+    ax1.axvline(x_cyc, color="#888", ls="-.", lw=1.3)
     ax1.set_xscale("log"); ax1.set_yscale("log")
-    ax1.set_xlabel("Re-anchoring interval (s)", fontsize=12)
-    ax1.set_ylabel("%RMSE (log scale)", fontsize=12)
+    ax1.set_ylim(top=max(KOOP_OPENLOOP, (pct + pct_ci).max()) * 3.5)   # headroom for the legend
+    ax1.set_xlabel("Re-anchoring interval (s)", fontsize=AXLAB)
+    ax1.set_ylabel("%RMSE (log scale)", fontsize=AXLAB)
+    ax1.tick_params(labelsize=TICK)
     ax1.grid(True, which="both", ls="--", alpha=0.3); ax1.set_axisbelow(True)
-    ax1.legend(fontsize=8.5, loc="upper left")
-    ax1.set_title("(a)", loc="left", fontsize=12)
+    ax1.legend(fontsize=TICK - 2, loc="upper left", framealpha=0.92)
+    ax1.text(x_cyc * 1.08, ax1.get_ylim()[1] * 0.9, "~1 cardiac cycle", rotation=90,
+             va="top", ha="left", fontsize=9.5, color="#666")
+    ax1.set_title("(a)", loc="left", fontsize=13)
 
     # (b) R^2 vs re-anchoring interval
-    ax2.plot(intervals_s, r2, "o-", color=c_koop, lw=2.2)
-    ax2.axhline(0.687, color=c_koop, ls=":", lw=1.6, label="Koopman open-loop (0.69)")
-    ax2.axvline(1.0 / CARDIAC_HZ, color="#888", ls="-.", lw=1.0)
+    ax2.axhline(0.98, color=c_dir, ls="--", lw=1.3, alpha=0.7, label="DLinear/NLinear (0.98)")
+    ax2.axhline(0.687, color=c_open, ls=":", lw=2.2, label="Koopman open-loop (0.69)")
+    ax2.fill_between(intervals_s, r2 - r2_ci, r2 + r2_ci, color=c_koop, alpha=0.22)
+    ax2.plot(intervals_s, r2, "o-", color=c_koop, lw=2.8, ms=7, zorder=5, label="Koopman (re-anchored)")
+    ax2.axvline(x_cyc, color="#888", ls="-.", lw=1.3)
     ax2.set_xscale("log")
-    ax2.set_xlabel("Re-anchoring interval (s)", fontsize=12)
-    ax2.set_ylabel(r"$R^2$", fontsize=12)
-    ax2.set_ylim(0.6, 1.02)
+    ax2.set_xlabel("Re-anchoring interval (s)", fontsize=AXLAB)
+    ax2.set_ylabel(r"$R^2$", fontsize=AXLAB)
+    ax2.set_ylim(0.6, 1.03)
+    ax2.tick_params(labelsize=TICK)
     ax2.grid(True, which="both", ls="--", alpha=0.3); ax2.set_axisbelow(True)
-    ax2.legend(fontsize=8.5, loc="lower left")
-    ax2.set_title("(b)", loc="left", fontsize=12)
+    ax2.legend(fontsize=TICK - 2, loc="lower left", framealpha=0.92)
+    ax2.text(x_cyc * 1.08, 0.63, "~1 cardiac cycle", rotation=90,
+             va="bottom", ha="left", fontsize=9.5, color="#666")
+    ax2.set_title("(b)", loc="left", fontsize=13)
 
     fig.tight_layout()
     for ext in ("svg", "png"):
