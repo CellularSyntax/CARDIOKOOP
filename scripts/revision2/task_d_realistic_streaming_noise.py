@@ -166,35 +166,93 @@ def main():
             w.writerow([f"streaming_K{K_REANCHOR}", snr, r["pct_rmse_mean"], r["pct_rmse_ci95"], r["r2_mean"]])
     print(f"Saved -> {out_csv} (+ .json)")
 
-    # ── figure ──────────────────────────────────────────────────────────────
+    # ── figure: noise illustration (a,b) + robustness curves (c,d) ───────────
     labels = ["Clean"] + [f"{s} dB" for s in SNR_DB]
     x = np.arange(len(labels))
+
     def curve(d, key):
         return np.array([clean[key]] + [d[str(s)][key] for s in SNR_DB])
-    def ci(d):
+
+    def ci_pct(d):
         return np.array([clean["pct_rmse_ci95"]] + [d[str(s)]["pct_rmse_ci95"] for s in SNR_DB])
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
-    pa, ps = "#5a286b", "#dda251"
+    def ci_r2(d):
+        sd = np.array([clean["r2_sd"]] + [d[str(s)]["r2_sd"] for s in SNR_DB])
+        return 1.96 * sd / np.sqrt(B)
 
-    ax = axes[0]
-    ax.errorbar(x, curve(realistic_ic, "pct_rmse_mean"), yerr=ci(realistic_ic),
-                fmt="o-", color=pa, lw=2, capsize=4, label="Realistic IC (AWGN+wander)")
-    ax.errorbar(x, curve(streaming, "pct_rmse_mean"), yerr=ci(streaming),
-                fmt="s--", color=ps, lw=2, capsize=4, label=f"Streaming re-anchor (K={K_REANCHOR})")
-    ax.set_xticks(x); ax.set_xticklabels(labels)
-    ax.set_ylabel("%RMSE"); ax.set_xlabel("Noise level (SNR)")
-    ax.set_title("(a)", fontsize=12, loc="left"); ax.legend(fontsize=10)
-    ax.grid(axis="y", alpha=0.3)
+    C_REAL, C_STREAM = "#5a286b", "#dda251"      # realistic-IC / streaming
+    C_AWGN, C_WANDER = "#9a9a9a", "#2e7ec0"      # noise components
+    AXLAB, TICK = 13, 11
 
-    ax = axes[1]
-    ax.plot(x, curve(realistic_ic, "r2_mean"), "o-", color=pa, lw=2, label="Realistic IC")
-    ax.plot(x, curve(streaming, "r2_mean"), "s--", color=ps, lw=2, label=f"Streaming (K={K_REANCHOR})")
-    ax.axhline(0, color="#888", ls=":", lw=0.8)
-    ax.set_xticks(x); ax.set_xticklabels(labels)
-    ax.set_ylabel(r"$R^2$"); ax.set_xlabel("Noise level (SNR)")
-    ax.set_title("(b)", fontsize=12, loc="left"); ax.legend(fontsize=10)
-    ax.grid(axis="y", alpha=0.3)
+    # representative noise sample (one channel, one SNR) for the illustration
+    ch_ill, snr_ill, nwin = 7, 10, 300           # P_lv, 10 dB, first 3 s
+    tt = np.arange(T) * DT
+    tp = sig_power[ch_ill] / (10 ** (snr_ill / 10.0))
+    awgn_std = np.sqrt((1 - WANDER_FRAC) * tp)
+    wpow = WANDER_FRAC * tp
+    rng_i = np.random.default_rng(SEED + 7)
+    awgn_c = rng_i.normal(0, 1, T) * awgn_std
+    f_i, phi_i = rng_i.uniform(*WANDER_HZ), rng_i.uniform(0, 2 * np.pi)
+    wander_c = np.sqrt(2 * wpow) * np.sin(2 * np.pi * f_i * tt + phi_i)
+    total_c = awgn_c + wander_c
+    sl = slice(0, nwin)
+    plv_clean = Xph[0, :, ch_ill]
+    plv_noisy = plv_clean + total_c * sig_std[ch_ill]
+    reanchor_t = np.arange(K_REANCHOR, nwin, K_REANCHOR) * DT
+
+    fig, (axa, axb, axc, axd) = plt.subplots(
+        1, 4, figsize=(20, 4.3), gridspec_kw={"width_ratios": [1.4, 1.4, 1.0, 1.0]})
+    fig.subplots_adjust(wspace=0.32)
+
+    # (a) noise-model composition
+    axa.plot(tt[sl], awgn_c[sl], color=C_AWGN, lw=0.8, label="AWGN")
+    axa.plot(tt[sl], wander_c[sl], color=C_WANDER, lw=2.2, label="Baseline wander")
+    axa.plot(tt[sl], total_c[sl], color=C_REAL, lw=1.1, alpha=0.9, label="Total")
+    axa.axhline(0, color="#bbb", lw=0.7)
+    axa.set_xlabel("Time (s)", fontsize=AXLAB); axa.set_ylabel("Noise (norm. units)", fontsize=AXLAB)
+    axa.tick_params(labelsize=TICK); axa.grid(alpha=0.25); axa.set_axisbelow(True)
+    axa.legend(fontsize=TICK - 1, loc="upper right", framealpha=0.9)
+    axa.set_title("(a)", loc="left", fontsize=13)
+
+    # (b) effect on a representative signal + re-anchoring
+    axb.plot(tt[sl], plv_clean[sl], color="k", lw=1.7, label="Clean")
+    axb.plot(tt[sl], plv_noisy[sl], color=C_REAL, lw=1.0, alpha=0.85, label="Noisy observation")
+    for rt in reanchor_t:
+        axb.axvline(rt, color=C_STREAM, ls="--", lw=1.1, alpha=0.75)
+    axb.plot([], [], color=C_STREAM, ls="--", lw=1.1, label=f"Re-anchor (every {K_REANCHOR * DT:.0f} s)")
+    axb.set_xlabel("Time (s)", fontsize=AXLAB); axb.set_ylabel(r"$P_{lv}$ (mmHg)", fontsize=AXLAB)
+    axb.tick_params(labelsize=TICK); axb.grid(alpha=0.25); axb.set_axisbelow(True)
+    axb.legend(fontsize=TICK - 1, loc="upper right", framealpha=0.9)
+    axb.set_title("(b)", loc="left", fontsize=13)
+
+    # (c) %RMSE vs SNR, shaded CI silhouettes, log-y
+    for d, c, lab, mk in [(realistic_ic, C_REAL, "Realistic IC (AWGN+wander)", "o"),
+                          (streaming, C_STREAM, f"Streaming (K={K_REANCHOR})", "s")]:
+        m, e = curve(d, "pct_rmse_mean"), ci_pct(d)
+        axc.fill_between(x, np.clip(m - e, 1e-3, None), m + e, color=c, alpha=0.18)
+        axc.plot(x, m, color=c, lw=2.3, marker=mk, ms=6, label=lab)
+    axc.set_yscale("log")
+    axc.set_xticks(x); axc.set_xticklabels(labels, fontsize=TICK)
+    axc.set_xlabel("Noise level (SNR)", fontsize=AXLAB); axc.set_ylabel("%RMSE (log)", fontsize=AXLAB)
+    axc.tick_params(labelsize=TICK); axc.grid(axis="y", which="both", ls="--", alpha=0.3); axc.set_axisbelow(True)
+    axc.legend(fontsize=TICK - 1.5, loc="upper left", framealpha=0.9)
+    axc.text(0.97, 0.04, "IC diverges @ 5 dB", transform=axc.transAxes, ha="right", va="bottom",
+             fontsize=9, style="italic", color=C_REAL)
+    axc.set_title("(c)", loc="left", fontsize=13)
+
+    # (d) R² vs SNR, shaded CI silhouettes
+    for d, c, lab, mk in [(realistic_ic, C_REAL, "Realistic IC", "o"),
+                          (streaming, C_STREAM, f"Streaming (K={K_REANCHOR})", "s")]:
+        m, e = curve(d, "r2_mean"), ci_r2(d)
+        axd.fill_between(x, m - e, m + e, color=c, alpha=0.18)
+        axd.plot(x, m, color=c, lw=2.3, marker=mk, ms=6, label=lab)
+    axd.axhline(0, color="#888", ls=":", lw=0.9)
+    axd.set_ylim(-0.08, 1.03)
+    axd.set_xticks(x); axd.set_xticklabels(labels, fontsize=TICK)
+    axd.set_xlabel("Noise level (SNR)", fontsize=AXLAB); axd.set_ylabel(r"$R^2$", fontsize=AXLAB)
+    axd.tick_params(labelsize=TICK); axd.grid(axis="y", ls="--", alpha=0.3); axd.set_axisbelow(True)
+    axd.legend(fontsize=TICK - 1.5, loc="lower left", framealpha=0.9)
+    axd.set_title("(d)", loc="left", fontsize=13)
 
     fig.tight_layout()
     for ext in ("svg", "png"):
