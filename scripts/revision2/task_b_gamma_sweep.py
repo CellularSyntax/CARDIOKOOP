@@ -100,7 +100,8 @@ def main():
     ax1.fill_between(g_arr, pct_arr - e, pct_arr + e, color=c1, alpha=0.18)
     ax1.plot(g_arr, pct_arr, "o-", color=c1, lw=2.3, ms=6, zorder=4)
     ax1.set_yscale("log")
-    ax1.axvline(trained_gamma, color="k", ls=":", lw=1.3, alpha=0.7)
+    # partial guide line (lower region only) so it does not cross the upper-left notes
+    ax1.axvline(trained_gamma, color="k", ls=":", lw=1.3, alpha=0.7, ymax=0.5)
     # flag the trained and control-off points with open rings
     ax1.scatter([g_arr[gi_tr]], [pct_arr[gi_tr]], s=150, facecolors="none",
                 edgecolors=c_tr, linewidths=2.4, zorder=6)
@@ -126,6 +127,8 @@ def main():
     ax3.axvline(trained_gamma, color="k", ls=":", lw=1.3, alpha=0.7)
     ax3.scatter([g_arr[gi_tr]], [r2_clip[gi_tr]], s=150, facecolors="none",
                 edgecolors=c_tr, linewidths=2.4, zorder=6)
+    ax3.scatter([g_arr[gi_ab]], [r2_clip[gi_ab]], s=150, facecolors="none",
+                edgecolors=c_ab, linewidths=2.4, zorder=6)
     ax3.set_ylim(R2_FLOOR - 0.4, 1.15)
     ax3.set_xlabel(r"Control gain $\gamma$", fontsize=AXLAB)
     ax3.set_ylabel(r"$R^2$ (pooled, clipped at $-5$)", fontsize=AXLAB)
