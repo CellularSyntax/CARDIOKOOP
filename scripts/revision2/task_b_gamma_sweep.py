@@ -100,8 +100,7 @@ def main():
     ax1.fill_between(g_arr, pct_arr - e, pct_arr + e, color=c1, alpha=0.18)
     ax1.plot(g_arr, pct_arr, "o-", color=c1, lw=2.3, ms=6, zorder=4)
     ax1.set_yscale("log")
-    # partial guide line (lower region only) so it does not cross the upper-left notes
-    ax1.axvline(trained_gamma, color="k", ls=":", lw=1.3, alpha=0.7, ymax=0.5)
+    ax1.axvline(trained_gamma, color="k", ls=":", lw=1.3, alpha=0.7)
     # flag the trained and control-off points with open rings
     ax1.scatter([g_arr[gi_tr]], [pct_arr[gi_tr]], s=150, facecolors="none",
                 edgecolors=c_tr, linewidths=2.4, zorder=6)
@@ -111,8 +110,11 @@ def main():
     notes_a = [(f"$\\gamma$=0.1 (trained, optimal): {pct_arr[gi_tr]:.1f}%", c_tr),
                (f"$\\gamma$=0 (control off): {pct_arr[gi_ab]:.0f}%", c_ab),
                (r"$\gamma\geq$0.5: diverged", "#555555")]
+    # place the notes just to the RIGHT of the trained-gamma line (x in data, y in axes)
+    from matplotlib.transforms import blended_transform_factory
+    trans_a = blended_transform_factory(ax1.transData, ax1.transAxes)
     for i, (txt, col) in enumerate(notes_a):
-        ax1.text(0.03, 0.97 - i * 0.08, txt, transform=ax1.transAxes,
+        ax1.text(trained_gamma + 0.03, 0.97 - i * 0.08, txt, transform=trans_a,
                  va="top", ha="left", fontsize=TICK - 1, color=col)
     ax1.set_xlabel(r"Control gain $\gamma$", fontsize=AXLAB)
     ax1.set_ylabel("%RMSE (log scale)", fontsize=AXLAB)
