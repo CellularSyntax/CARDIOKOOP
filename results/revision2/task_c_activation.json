@@ -1,0 +1,57 @@
+{
+  "optuna_covers_activation": false,
+  "deployed_reference_tanh_pct_rmse": 17.54,
+  "analysis1_deployed_swap": {
+    "tanh": {
+      "pct_rmse_mean": 17.54,
+      "pct_rmse_ci95": 1.44,
+      "r2_pooled": 0.691,
+      "status": "stable"
+    },
+    "relu": {
+      "pct_rmse_mean": 51.37,
+      "pct_rmse_ci95": 1.63,
+      "r2_pooled": -4.165,
+      "status": "stable"
+    },
+    "sigmoid": {
+      "pct_rmse_mean": "diverged",
+      "pct_rmse_ci95": null,
+      "r2_pooled": null,
+      "status": "diverged"
+    },
+    "identity": {
+      "pct_rmse_mean": 15.94,
+      "pct_rmse_ci95": 1.53,
+      "r2_pooled": 0.618,
+      "status": "stable"
+    }
+  },
+  "analysis2_controlnet_retrain": {
+    "tanh": {
+      "pct_rmse_mean": 45.04,
+      "pct_rmse_ci95": 3.32,
+      "r2_pooled": 0.347,
+      "status": "stable"
+    },
+    "relu": {
+      "pct_rmse_mean": "diverged",
+      "pct_rmse_ci95": null,
+      "r2_pooled": null,
+      "status": "diverged"
+    },
+    "sigmoid": {
+      "pct_rmse_mean": "diverged",
+      "pct_rmse_ci95": null,
+      "r2_pooled": null,
+      "status": "diverged"
+    },
+    "identity": {
+      "pct_rmse_mean": 42.38,
+      "pct_rmse_ci95": 3.41,
+      "r2_pooled": 0.445,
+      "status": "stable"
+    }
+  },
+  "conclusion": "A zero-centred output activation is required. tanh (deployed) and identity are stable and accurate; ReLU collapses to the no-control error (~51%) and sigmoid diverges, because non-negative activations add a persistent DC bias that accumulates over the 1499-step horizon."
+}

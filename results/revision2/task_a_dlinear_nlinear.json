@@ -1,0 +1,60 @@
+{
+  "config": {
+    "lookback_L": 10,
+    "horizon_H": 1490,
+    "kernel": 5,
+    "control_feature": "V_usv,step (step level), train-standardised",
+    "split_eval": "test1 (seed-42)",
+    "epochs_max": 30000,
+    "patience": 3000,
+    "lr": 0.01,
+    "seed": 42,
+    "note": "Direct non-autoregressive multi-step forecasters (Zeng et al. AAAI 2023). Look-back = 10 steps (same warm-up as RNN baselines); control step level given as an extra feature."
+  },
+  "DLinear": {
+    "n_params": 429120,
+    "pct_rmse_mean": 3.0329997812800746,
+    "pct_rmse_ci95": 0.6118278589077321,
+    "pct_rmse_sd": 2.207283816084202,
+    "r2_pooled": 0.9832154138677354,
+    "r2_mean_per_signal": 0.9617039655369658,
+    "inference_time_s_per_traj": 7.99846649169922e-06,
+    "per_signal_pct_mean": {
+      "P_ra": 1.0511138272032878,
+      "V_ra": 0.9053334073188793,
+      "P_rv": 0.4882519858400065,
+      "V_rv": 1.0106337783096282,
+      "P_vp": 7.553852689155109,
+      "P_la": 5.382477101832081,
+      "V_la": 4.655548316821192,
+      "P_lv": 1.9061381271237436,
+      "V_lv": 3.659185607171474,
+      "Q_i_lv": 5.25815645107453,
+      "Q_o_lv": 1.393950845846433,
+      "P_ao": 3.1313552376645357
+    }
+  },
+  "NLinear": {
+    "n_params": 214560,
+    "pct_rmse_mean": 3.6332718340551016,
+    "pct_rmse_ci95": 0.6347742458931722,
+    "pct_rmse_sd": 2.2900672132328523,
+    "r2_pooled": 0.9815613469249028,
+    "r2_mean_per_signal": 0.9535172941126957,
+    "inference_time_s_per_traj": 3.999710083007812e-06,
+    "per_signal_pct_mean": {
+      "P_ra": 1.0633312221764772,
+      "V_ra": 7.031342153981193,
+      "P_rv": 0.44839423623292585,
+      "V_rv": 1.140963987025177,
+      "P_vp": 7.644091731972063,
+      "P_la": 5.414080412712643,
+      "V_la": 4.60640239921618,
+      "P_lv": 2.055543289540492,
+      "V_lv": 3.7202238470152724,
+      "Q_i_lv": 5.496528989389957,
+      "Q_o_lv": 1.8080588104182014,
+      "P_ao": 3.170300928980633
+    }
+  }
+}

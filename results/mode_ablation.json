@@ -1,0 +1,33 @@
+{
+  "baseline_pct_rmse": 17.53701407196903,
+  "ablation_results": [
+    {
+      "mode_type": "complex",
+      "mode_index": 0,
+      "f_hz": 1.8683580252318757,
+      "pct_rmse": 19.469120301406864,
+      "pct_rmse_increase": 1.932106229437835
+    },
+    {
+      "mode_type": "complex",
+      "mode_index": 1,
+      "f_hz": 0.009580770381800354,
+      "pct_rmse": 19.931935787608506,
+      "pct_rmse_increase": 2.3949217156394766
+    },
+    {
+      "mode_type": "complex",
+      "mode_index": 2,
+      "f_hz": -0.004238250070318454,
+      "pct_rmse": 21.144928934989956,
+      "pct_rmse_increase": 3.607914863020927
+    },
+    {
+      "mode_type": "complex",
+      "mode_index": 3,
+      "f_hz": -1.7736415152815856,
+      "pct_rmse": 33.912671554219266,
+      "pct_rmse_increase": 16.375657482250237
+    }
+  ]
+}

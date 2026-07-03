@@ -1,0 +1,14 @@
+{
+  "AR(20)": {
+    "training_time_s": 10.91,
+    "training_time_min": 0.18,
+    "note": "OLS fit of AR(20) coefficients on 400 training trajectories"
+  },
+  "MLP": {
+    "training_time_s": 534.57,
+    "training_time_min": 8.91,
+    "best_epoch": 28,
+    "device": "cpu",
+    "note": "Full MLP training loop with early stopping (patience=10, max 80 epochs)"
+  }
+}
