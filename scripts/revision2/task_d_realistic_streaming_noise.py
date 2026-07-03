@@ -92,15 +92,33 @@ def streaming_rollout(model, X_true_norm, u_norm, noise, K, device):
     return np.stack(outs, axis=1)
 
 
+DIVERGE_PCT = 300.0   # a per-trajectory %RMSE above this (or non-finite) is a diverged forecast
+
+
 def metrics(Xph, pred, B, D):
+    """Robust per-scenario summary. Under severe initial-condition corruption a
+    minority of open-loop forecasts overflow / blow up, which makes the MEAN %RMSE
+    undefined or outlier-dominated. We therefore report the MEDIAN and the
+    inter-quartile range over the NON-diverged trajectories, plus an explicit
+    count of diverged trajectories (non-finite or %RMSE > DIVERGE_PCT)."""
     pct = np.array([C.pct_rmse_ps(Xph[i], pred[i]) for i in range(B)])
     r2  = np.array([C.r2_flat(Xph[i], pred[i]) for i in range(B)])
+    diverged = ~np.isfinite(pct) | (pct > DIVERGE_PCT)
+    ok = ~diverged
+    pct_ok = pct[ok]
+    r2_ok = r2[ok & np.isfinite(r2)]
+    def _pc(a, q):
+        return float(np.percentile(a, q)) if a.size else float("nan")
     return {
-        "pct_rmse_mean": float(pct.mean()),
-        "pct_rmse_ci95": float(C.ci95(pct)),
-        "pct_rmse_sd":   float(pct.std(ddof=1)),
-        "r2_mean":       float(r2.mean()),
-        "r2_sd":         float(r2.std(ddof=1)),
+        "pct_rmse_median": _pc(pct_ok, 50),
+        "pct_rmse_q25":    _pc(pct_ok, 25),
+        "pct_rmse_q75":    _pc(pct_ok, 75),
+        "pct_rmse_mean_ok": float(pct_ok.mean()) if pct_ok.size else float("nan"),
+        "r2_median":       _pc(r2_ok, 50),
+        "r2_q25":          _pc(r2_ok, 25),
+        "r2_q75":          _pc(r2_ok, 75),
+        "n_diverged":      int(diverged.sum()),
+        "n_total":         int(B),
     }
 
 
@@ -118,7 +136,7 @@ def main():
     # 'realistic IC' scenario)
     pred_clean = C.koopman_rollout(model, Xn[:, 0, :], Un, device=device) * sig_std + sig_mean
     clean = metrics(Xph, pred_clean, B, D)
-    print(f"Clean (open-loop): %RMSE={clean['pct_rmse_mean']:.2f}  R2={clean['r2_mean']:.3f}")
+    print(f"Clean (open-loop): %RMSE(med)={clean['pct_rmse_median']:.2f}  R2(med)={clean['r2_median']:.3f}")
 
     # clean RE-ANCHORED baseline (streaming with zero noise) -- the matching clean
     # reference for the streaming curve, so each scenario is compared against its own
@@ -126,8 +144,8 @@ def main():
     pred_stream_clean = (streaming_rollout(model, Xn, Un, np.zeros((B, T, D)), K_REANCHOR, device)
                          * sig_std + sig_mean)
     clean_stream = metrics(Xph, pred_stream_clean, B, D)
-    print(f"Clean (re-anchored K={K_REANCHOR}): %RMSE={clean_stream['pct_rmse_mean']:.2f}  "
-          f"R2={clean_stream['r2_mean']:.3f}")
+    print(f"Clean (re-anchored K={K_REANCHOR}): %RMSE(med)={clean_stream['pct_rmse_median']:.2f}  "
+          f"R2(med)={clean_stream['r2_median']:.3f}")
 
     realistic_ic, streaming = {}, {}
     for snr in SNR_DB:
@@ -142,10 +160,11 @@ def main():
         pred_b = streaming_rollout(model, Xn, Un, noise, K_REANCHOR, device) * sig_std + sig_mean
         streaming[str(snr)] = metrics(Xph, pred_b, B, D)
 
-        print(f"SNR={snr:2d}dB | realistic-IC %RMSE={realistic_ic[str(snr)]['pct_rmse_mean']:6.2f} "
-              f"R2={realistic_ic[str(snr)]['r2_mean']:.3f} | "
-              f"streaming(K={K_REANCHOR}) %RMSE={streaming[str(snr)]['pct_rmse_mean']:6.2f} "
-              f"R2={streaming[str(snr)]['r2_mean']:.3f}")
+        ri, st = realistic_ic[str(snr)], streaming[str(snr)]
+        print(f"SNR={snr:2d}dB | realistic-IC %RMSE(med)={ri['pct_rmse_median']:6.2f} "
+              f"R2(med)={ri['r2_median']:.3f} (div {ri['n_diverged']}/{ri['n_total']}) | "
+              f"streaming %RMSE(med)={st['pct_rmse_median']:6.2f} "
+              f"R2(med)={st['r2_median']:.3f} (div {st['n_diverged']}/{st['n_total']})")
 
     out = {
         "description": ("Realistic (AWGN + baseline wander) IC corruption and "
@@ -167,16 +186,19 @@ def main():
     out_csv = os.path.join(C.REV2_DIR, "task_d_realistic_streaming_noise.csv")
     with open(out_csv, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["variant", "snr_db", "pct_rmse_mean", "pct_rmse_ci95", "r2_mean"])
-        w.writerow(["clean", "inf", clean["pct_rmse_mean"], clean["pct_rmse_ci95"], clean["r2_mean"]])
-        w.writerow(["clean_reanchored", "inf", clean_stream["pct_rmse_mean"],
-                    clean_stream["pct_rmse_ci95"], clean_stream["r2_mean"]])
+        cols = ["variant", "snr_db", "pct_rmse_median", "pct_rmse_q25", "pct_rmse_q75",
+                "r2_median", "r2_q25", "r2_q75", "n_diverged", "n_total"]
+        w.writerow(cols)
+
+        def _row(name, snr, r):
+            w.writerow([name, snr, r["pct_rmse_median"], r["pct_rmse_q25"], r["pct_rmse_q75"],
+                        r["r2_median"], r["r2_q25"], r["r2_q75"], r["n_diverged"], r["n_total"]])
+        _row("clean", "inf", clean)
+        _row("clean_reanchored", "inf", clean_stream)
         for snr in SNR_DB:
-            r = realistic_ic[str(snr)]
-            w.writerow(["realistic_ic", snr, r["pct_rmse_mean"], r["pct_rmse_ci95"], r["r2_mean"]])
+            _row("realistic_ic", snr, realistic_ic[str(snr)])
         for snr in SNR_DB:
-            r = streaming[str(snr)]
-            w.writerow([f"streaming_K{K_REANCHOR}", snr, r["pct_rmse_mean"], r["pct_rmse_ci95"], r["r2_mean"]])
+            _row(f"streaming_K{K_REANCHOR}", snr, streaming[str(snr)])
     print(f"Saved -> {out_csv} (+ .json)")
 
     # ── figure: noise illustration (a,b) + robustness curves (c,d) ───────────
@@ -186,12 +208,13 @@ def main():
     def curve(d, key, cpt):
         return np.array([cpt[key]] + [d[str(s)][key] for s in SNR_DB])
 
-    def ci_pct(d, cpt):
-        return np.array([cpt["pct_rmse_ci95"]] + [d[str(s)]["pct_rmse_ci95"] for s in SNR_DB])
+    def band(d, klo, khi, cpt):
+        lo = np.array([cpt[klo]] + [d[str(s)][klo] for s in SNR_DB])
+        hi = np.array([cpt[khi]] + [d[str(s)][khi] for s in SNR_DB])
+        return lo, hi
 
-    def ci_r2(d, cpt):
-        sd = np.array([cpt["r2_sd"]] + [d[str(s)]["r2_sd"] for s in SNR_DB])
-        return 1.96 * sd / np.sqrt(B)
+    def ndiv(d, cpt):
+        return np.array([cpt["n_diverged"]] + [d[str(s)]["n_diverged"] for s in SNR_DB])
 
     C_REAL, C_STREAM = "#5a286b", "#dda251"      # realistic-IC / streaming
     C_AWGN, C_WANDER = "#9a9a9a", "#2e7ec0"      # noise components
@@ -243,34 +266,44 @@ def main():
     axb.legend(fontsize=TICK - 1, loc="upper right", framealpha=0.9)
     axb.set_title("(b)", loc="left", fontsize=13)
 
-    # (c) %RMSE vs SNR, shaded CI silhouettes, log-y
+    # (c) median %RMSE vs SNR, shaded IQR silhouettes, log-y
     _cmax = 0.0
     for d, cpt, c, lab, mk in [(realistic_ic, clean, C_REAL, "Realistic IC (AWGN+wander)", "o"),
                                (streaming, clean_stream, C_STREAM, f"Streaming (K={K_REANCHOR})", "s")]:
-        m, e = curve(d, "pct_rmse_mean", cpt), ci_pct(d, cpt)
-        axc.fill_between(x, np.clip(m - e, 1e-3, None), m + e, color=c, alpha=0.18)
+        m = curve(d, "pct_rmse_median", cpt)
+        lo, hi = band(d, "pct_rmse_q25", "pct_rmse_q75", cpt)
+        axc.fill_between(x, np.clip(lo, 1e-3, None), hi, color=c, alpha=0.18)
         axc.plot(x, m, color=c, lw=2.3, marker=mk, ms=6, label=lab)
-        _cmax = max(_cmax, np.nanmax(m + e))
+        _cmax = max(_cmax, np.nanmax(hi))
     axc.set_yscale("log")
     axc.set_ylim(top=_cmax * 3.2)     # top headroom so the upper-left legend clears the curves
     axc.set_xticks(x); axc.set_xticklabels(labels, fontsize=TICK)
-    axc.set_xlabel("Noise level (SNR)", fontsize=AXLAB); axc.set_ylabel("%RMSE (log)", fontsize=AXLAB)
+    axc.set_xlabel("Noise level (SNR)", fontsize=AXLAB)
+    axc.set_ylabel("%RMSE (median, log)", fontsize=AXLAB)
     axc.tick_params(labelsize=TICK); axc.grid(axis="y", which="both", ls="--", alpha=0.3); axc.set_axisbelow(True)
     axc.legend(fontsize=TICK - 1.5, loc="upper left", framealpha=0.9)
-    axc.text(0.97, 0.04, "IC diverges @ 5 dB", transform=axc.transAxes, ha="right", va="bottom",
-             fontsize=9, style="italic", color=C_REAL)
+    # flag diverged trajectories on the realistic-IC curve (severe noise only)
+    nd = ndiv(realistic_ic, clean); m_r = curve(realistic_ic, "pct_rmse_median", clean)
+    for xi in np.where(nd > 0)[0]:
+        axc.annotate(f"{int(nd[xi])}/{realistic_ic[str(SNR_DB[xi - 1])]['n_total']} diverged",
+                     xy=(x[xi], m_r[xi]), xytext=(x[xi] - 0.15, m_r[xi] * 8),
+                     fontsize=8.5, color=C_REAL, ha="right", va="bottom", style="italic",
+                     arrowprops=dict(arrowstyle="->", color=C_REAL, lw=1))
     axc.set_title("(c)", loc="left", fontsize=13)
 
-    # (d) R² vs SNR, shaded CI silhouettes
+    # (d) median R² vs SNR, shaded IQR silhouettes
+    _dlo = 0.0
     for d, cpt, c, lab, mk in [(realistic_ic, clean, C_REAL, "Realistic IC", "o"),
                                (streaming, clean_stream, C_STREAM, f"Streaming (K={K_REANCHOR})", "s")]:
-        m, e = curve(d, "r2_mean", cpt), ci_r2(d, cpt)
-        axd.fill_between(x, m - e, m + e, color=c, alpha=0.18)
+        m = curve(d, "r2_median", cpt)
+        lo, hi = band(d, "r2_q25", "r2_q75", cpt)
+        axd.fill_between(x, lo, hi, color=c, alpha=0.18)
         axd.plot(x, m, color=c, lw=2.3, marker=mk, ms=6, label=lab)
+        _dlo = min(_dlo, np.nanmin(lo))
     axd.axhline(0, color="#888", ls=":", lw=0.9)
-    axd.set_ylim(-0.08, 1.03)
+    axd.set_ylim(min(-0.1, _dlo - 0.1), 1.05)
     axd.set_xticks(x); axd.set_xticklabels(labels, fontsize=TICK)
-    axd.set_xlabel("Noise level (SNR)", fontsize=AXLAB); axd.set_ylabel(r"$R^2$", fontsize=AXLAB)
+    axd.set_xlabel("Noise level (SNR)", fontsize=AXLAB); axd.set_ylabel(r"$R^2$ (median)", fontsize=AXLAB)
     axd.tick_params(labelsize=TICK); axd.grid(axis="y", ls="--", alpha=0.3); axd.set_axisbelow(True)
     axd.legend(fontsize=TICK - 1.5, loc="lower left", framealpha=0.9)
     axd.set_title("(d)", loc="left", fontsize=13)
