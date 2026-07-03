@@ -87,45 +87,56 @@ def main():
     pct_ci  = np.array([r["pct_rmse_ci95"] for r in rows])
     r2_arr  = np.array([r["r2_pooled"] for r in rows])
     R2_FLOOR = -5.0   # clip catastrophic (diverged) R^2 for readability
-
-    fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(11.5, 4.4))
+    AXLAB, TICK = 14, 12
     c1, c2 = "#5a286b", "#dda251"
+    c_tr, c_ab = "#2e7d32", "#ac4484"                 # trained / control-off accents
+    gi_tr = int(np.argmin(np.abs(g_arr - trained_gamma)))
+    gi_ab = int(np.argmin(np.abs(g_arr - 0.0)))
 
-    # Panel (a): %RMSE on log scale (values span >15 decades at large gamma)
-    ax1.errorbar(g_arr, pct_arr, yerr=np.minimum(pct_ci, pct_arr * 0.99),
-                 fmt="o-", color=c1, lw=2, capsize=4)
+    fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(12, 4.7))
+
+    # Panel (a): %RMSE (log) with shaded CI silhouette (values span >15 decades)
+    e = np.minimum(pct_ci, pct_arr * 0.99)
+    ax1.fill_between(g_arr, pct_arr - e, pct_arr + e, color=c1, alpha=0.18)
+    ax1.plot(g_arr, pct_arr, "o-", color=c1, lw=2.3, ms=6, zorder=4)
     ax1.set_yscale("log")
-    ax1.set_xlabel(r"Control gain $\gamma$", fontsize=13)
-    ax1.set_ylabel("%RMSE (log scale)", fontsize=13)
-    ax1.tick_params(labelsize=12)
-    ax1.axvline(trained_gamma, color="k", ls=":", lw=1.2, alpha=0.7)
-    ax1.axhline(pct_arr[g_arr == trained_gamma][0], color="green", ls="--", lw=1, alpha=0.4)
-    ax1.annotate("trained\n$\\gamma$=0.1\n(17.5%)", xy=(0.1, 17.5),
-                 xytext=(0.16, 3.0), fontsize=9, color="green",
-                 arrowprops=dict(arrowstyle="->", color="green", lw=1))
-    ax1.annotate("control\nablation\n$\\gamma$=0 (51%)", xy=(0.0, 51.4),
-                 xytext=(0.0, 400), fontsize=9, color="#ac4484",
-                 arrowprops=dict(arrowstyle="->", color="#ac4484", lw=1))
-    ax1.set_title("(a)", fontsize=12, loc="left")
-    ax1.grid(axis="y", which="both", ls="--", alpha=0.3)
+    ax1.axvline(trained_gamma, color="k", ls=":", lw=1.3, alpha=0.7)
+    # flag the trained and control-off points with open rings
+    ax1.scatter([g_arr[gi_tr]], [pct_arr[gi_tr]], s=150, facecolors="none",
+                edgecolors=c_tr, linewidths=2.4, zorder=6)
+    ax1.scatter([g_arr[gi_ab]], [pct_arr[gi_ab]], s=150, facecolors="none",
+                edgecolors=c_ab, linewidths=2.4, zorder=6)
+    # key values placed in the empty upper-left (no curve crosses there)
+    notes_a = [(f"$\\gamma$=0.1 (trained, optimal): {pct_arr[gi_tr]:.1f}%", c_tr),
+               (f"$\\gamma$=0 (control off): {pct_arr[gi_ab]:.0f}%", c_ab),
+               (r"$\gamma\geq$0.5: diverged", "#555555")]
+    for i, (txt, col) in enumerate(notes_a):
+        ax1.text(0.03, 0.97 - i * 0.08, txt, transform=ax1.transAxes,
+                 va="top", ha="left", fontsize=TICK - 1, color=col)
+    ax1.set_xlabel(r"Control gain $\gamma$", fontsize=AXLAB)
+    ax1.set_ylabel("%RMSE (log scale)", fontsize=AXLAB)
+    ax1.tick_params(labelsize=TICK)
+    ax1.grid(axis="y", which="both", ls="--", alpha=0.3); ax1.set_axisbelow(True)
+    ax1.set_title("(a)", fontsize=13, loc="left")
 
-    # Panel (b): R^2 (clipped)
+    # Panel (b): pooled R^2 (clipped at the floor for readability)
     r2_clip = np.clip(r2_arr, R2_FLOOR, 1.0)
-    ax3.plot(g_arr, r2_clip, "s-", color=c2, lw=2)
-    ax3.axhline(0, color="#888888", ls=":", lw=0.8)
-    ax3.set_ylim(R2_FLOOR - 0.4, 1.1)
-    ax3.set_xlabel(r"Control gain $\gamma$", fontsize=13)
-    ax3.set_ylabel(r"$R^2$ (pooled, clipped at $-5$)", fontsize=13)
-    ax3.tick_params(labelsize=12)
-    ax3.axvline(trained_gamma, color="k", ls=":", lw=1.2, alpha=0.7)
-    ax3.set_title("(b)", fontsize=12, loc="left")
-    off = [(g, v) for g, v in zip(g_arr, r2_arr) if v < R2_FLOOR]
+    ax3.plot(g_arr, r2_clip, "s-", color=c2, lw=2.3, ms=6, zorder=4)
+    ax3.axhline(0, color="#888888", ls=":", lw=0.9)
+    ax3.axvline(trained_gamma, color="k", ls=":", lw=1.3, alpha=0.7)
+    ax3.scatter([g_arr[gi_tr]], [r2_clip[gi_tr]], s=150, facecolors="none",
+                edgecolors=c_tr, linewidths=2.4, zorder=6)
+    ax3.set_ylim(R2_FLOOR - 0.4, 1.15)
+    ax3.set_xlabel(r"Control gain $\gamma$", fontsize=AXLAB)
+    ax3.set_ylabel(r"$R^2$ (pooled, clipped at $-5$)", fontsize=AXLAB)
+    ax3.tick_params(labelsize=TICK)
+    ax3.grid(axis="y", ls="--", alpha=0.3); ax3.set_axisbelow(True)
+    ax3.set_title("(b)", fontsize=13, loc="left")
+    off = [g for g, v in zip(g_arr, r2_arr) if v < R2_FLOOR]
     if off:
-        ax3.text(0.98, 0.03,
-                 "diverged (off-scale): " + ", ".join(f"$\\gamma$={g}" for g, _ in off),
-                 transform=ax3.transAxes, ha="right", va="bottom",
-                 fontsize=8.5, style="italic", color="#555555")
-    ax3.grid(axis="y", ls="--", alpha=0.3)
+        ax3.text(0.97, 0.55, "diverged (off-scale):\n" + ", ".join(f"$\\gamma$={g}" for g in off),
+                 transform=ax3.transAxes, ha="right", va="center",
+                 fontsize=TICK - 2, style="italic", color="#555555")
 
     fig.tight_layout()
     for ext in ("svg", "png"):
