@@ -216,8 +216,9 @@ def main():
     def ndiv(d, cpt):
         return np.array([cpt["n_diverged"]] + [d[str(s)]["n_diverged"] for s in SNR_DB])
 
-    C_REAL, C_STREAM = "#5a286b", "#dda251"      # realistic-IC / streaming
-    C_AWGN, C_WANDER = "#9a9a9a", "#2e7ec0"      # noise components
+    C_REAL, C_STREAM = "#5a286b", "#dda251"                       # realistic-IC / streaming (panels c,d)
+    C_AWGN, C_WANDER, C_TOTAL = "#8c8c8c", "#0072b2", "#d55e00"   # panel-a noise components
+    C_NOISY, C_REANCH = "#d55e00", "#009e73"                       # panel-b noisy obs / re-anchor
     AXLAB, TICK = 13, 11
 
     # representative noise sample (one channel, one SNR) for the illustration
@@ -243,7 +244,7 @@ def main():
     # (a) noise-model composition
     axa.plot(tt[sl], awgn_c[sl], color=C_AWGN, lw=0.8, label="AWGN")
     axa.plot(tt[sl], wander_c[sl], color=C_WANDER, lw=2.2, label="Baseline wander")
-    axa.plot(tt[sl], total_c[sl], color=C_REAL, lw=1.1, alpha=0.9, label="Total")
+    axa.plot(tt[sl], total_c[sl], color=C_TOTAL, lw=1.3, alpha=0.95, label="Total")
     axa.axhline(0, color="#bbb", lw=0.7)
     _amax = np.max(np.abs(np.concatenate([awgn_c[sl], wander_c[sl], total_c[sl]])))
     axa.set_ylim(-_amax * 1.15, _amax * 1.9)     # top headroom so the legend clears the traces
@@ -254,10 +255,10 @@ def main():
 
     # (b) effect on a representative signal + re-anchoring
     axb.plot(tt[sl], plv_clean[sl], color="k", lw=1.7, label="Clean")
-    axb.plot(tt[sl], plv_noisy[sl], color=C_REAL, lw=1.0, alpha=0.85, label="Noisy observation")
+    axb.plot(tt[sl], plv_noisy[sl], color=C_NOISY, lw=1.1, alpha=0.9, label="Noisy observation")
     for rt in reanchor_t:
-        axb.axvline(rt, color=C_STREAM, ls="--", lw=1.1, alpha=0.75)
-    axb.plot([], [], color=C_STREAM, ls="--", lw=1.1, label=f"Re-anchor (every {K_REANCHOR * DT:.0f} s)")
+        axb.axvline(rt, color=C_REANCH, ls="--", lw=2.4, alpha=0.9)
+    axb.plot([], [], color=C_REANCH, ls="--", lw=2.4, label=f"Re-anchor (every {K_REANCHOR * DT:.0f} s)")
     _pall = np.concatenate([plv_clean[sl], plv_noisy[sl]])
     _prng = _pall.max() - _pall.min()
     axb.set_ylim(_pall.min() - 0.08 * _prng, _pall.max() + 0.55 * _prng)   # top headroom for legend
@@ -282,13 +283,7 @@ def main():
     axc.set_ylabel("%RMSE (median, log)", fontsize=AXLAB)
     axc.tick_params(labelsize=TICK); axc.grid(axis="y", which="both", ls="--", alpha=0.3); axc.set_axisbelow(True)
     axc.legend(fontsize=TICK - 1.5, loc="upper left", framealpha=0.9)
-    # flag diverged trajectories on the realistic-IC curve (severe noise only)
-    nd = ndiv(realistic_ic, clean); m_r = curve(realistic_ic, "pct_rmse_median", clean)
-    for xi in np.where(nd > 0)[0]:
-        axc.annotate(f"{int(nd[xi])}/{realistic_ic[str(SNR_DB[xi - 1])]['n_total']} diverged",
-                     xy=(x[xi], m_r[xi]), xytext=(x[xi] - 0.15, m_r[xi] * 8),
-                     fontsize=8.5, color=C_REAL, ha="right", va="bottom", style="italic",
-                     arrowprops=dict(arrowstyle="->", color=C_REAL, lw=1))
+    # (divergence counts are reported in the caption / Table S6, not annotated on the plot)
     axc.set_title("(c)", loc="left", fontsize=13)
 
     # (d) median R² vs SNR, shaded IQR silhouettes
