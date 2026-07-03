@@ -126,8 +126,6 @@ def main():
     ax1.tick_params(labelsize=TICK)
     ax1.grid(True, which="both", ls="--", alpha=0.3); ax1.set_axisbelow(True)
     ax1.legend(fontsize=TICK - 2, loc="upper left", framealpha=0.92)
-    ax1.text(x_cyc * 1.08, ax1.get_ylim()[1] * 0.9, "~1 cardiac cycle", rotation=90,
-             va="top", ha="left", fontsize=9.5, color="#666")
     ax1.set_title("(a)", loc="left", fontsize=13)
 
     # (b) R^2 vs re-anchoring interval
@@ -143,8 +141,6 @@ def main():
     ax2.tick_params(labelsize=TICK)
     ax2.grid(True, which="both", ls="--", alpha=0.3); ax2.set_axisbelow(True)
     ax2.legend(fontsize=TICK - 2, loc="lower left", framealpha=0.92)
-    ax2.text(x_cyc * 1.08, 0.63, "~1 cardiac cycle", rotation=90,
-             va="bottom", ha="left", fontsize=9.5, color="#666")
     ax2.set_title("(b)", loc="left", fontsize=13)
 
     fig.tight_layout()
