@@ -136,6 +136,8 @@ def panels_gj(true, pred, curve_data, models, out_stub):
     models_all = models          # roster for this figure; _pal (module-level) stays keyed to all 8
     r2_traj_all = {m: _r2_per_traj(true, pred[m]) for m in models_all}
     r2_sig_all = {m: _r2_per_sig(true, pred[m]) for m in models_all}
+    # order the violins best -> worst by mean R^2 (consistent with panel b's sorting)
+    violin_order = sorted(models_all, key=lambda m: r2_traj_all[m].mean(), reverse=True)
     _df_violin = pd.concat(
         [pd.DataFrame({"Model": m, "R2": np.clip(r2_traj_all[m], R2_CLIP, None)}) for m in models_all],
         ignore_index=True)
@@ -146,22 +148,22 @@ def panels_gj(true, pred, curve_data, models, out_stub):
 
     # (g) violin R² per trajectory
     ax0 = fig.add_subplot(gs[0])
-    sns.violinplot(data=_df_violin, x="Model", y="R2", order=models_all, hue="Model",
+    sns.violinplot(data=_df_violin, x="Model", y="R2", order=violin_order, hue="Model",
                    palette=_pal, legend=False, inner=None, cut=0, linewidth=0.8, alpha=0.55, ax=ax0)
-    sns.stripplot(data=_df_violin, x="Model", y="R2", order=models_all, hue="Model",
+    sns.stripplot(data=_df_violin, x="Model", y="R2", order=violin_order, hue="Model",
                   palette=_pal, legend=False, size=2.8, alpha=0.55, jitter=True, ax=ax0)
-    for xi, m in enumerate(models_all):
+    for xi, m in enumerate(violin_order):
         mu = np.clip(r2_traj_all[m], R2_CLIP, None).mean()
         ax0.scatter(xi, mu, marker="D", s=38, color="white", zorder=6, edgecolors=_pal[m], linewidths=1.8)
-    for xi, m in enumerate(models_all):
+    for xi, m in enumerate(violin_order):
         mu = r2_traj_all[m].mean()
         if mu < R2_CLIP:
             ax0.text(xi, R2_CLIP + 0.10, f"μ={mu:.0f}", ha="center", va="bottom",
                      fontsize=8.5, color="black", style="italic")
     ax0.axhline(0, color="#888888", lw=0.9, ls=":", alpha=0.7)
     ax0.set_ylim(R2_CLIP, 1.05)
-    ax0.set_xticks(range(len(models_all)))
-    ax0.set_xticklabels(models_all, rotation=30, ha="right", fontsize=13)
+    ax0.set_xticks(range(len(violin_order)))
+    ax0.set_xticklabels(violin_order, rotation=30, ha="right", fontsize=13)
     ax0.set_xlabel(""); ax0.set_ylabel(r"$R^2$ per trajectory", fontsize=15)
     ax0.tick_params(labelsize=14); ax0.yaxis.grid(True, linestyle="--", alpha=0.35); ax0.set_axisbelow(True)
 
