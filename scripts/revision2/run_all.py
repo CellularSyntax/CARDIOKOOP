@@ -19,12 +19,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PY = sys.executable
 
 STEPS = [
-    ("a",     "task_a_dlinear_nlinear.py",           "Task A: DLinear + NLinear baselines"),
-    ("b",     "task_b_gamma_sweep.py",               "Task B: control-gain gamma sweep"),
-    ("c",     "task_c_activation.py",                "Task C: control-net activation comparison"),
-    ("d",     "task_d_realistic_streaming_noise.py", "Task D: realistic + streaming noise"),
-    ("e",     "task_e_mode_ablation_export.py",      "Task E: mode-ablation export"),
-    ("build", "build_tables_figures.py",             "Tables 3/4/5 + Figures 5/6 (with DLinear/NLinear)"),
+    ("a",      "task_a_dlinear_nlinear.py",           "Task A: DLinear + NLinear baselines (training)"),
+    ("b",      "task_b_gamma_sweep.py",               "Task B: control-gain gamma sweep (Fig S7)"),
+    ("c",      "task_c_activation.py",                "Task C: control-net activation comparison (Table S4)"),
+    ("d",      "task_d_realistic_streaming_noise.py", "Task D: realistic + streaming noise (Fig S8)"),
+    ("e",      "task_e_mode_ablation_export.py",      "Task E: mode-ablation export (Table)"),
+    ("f",      "task_f_clean_reanchoring.py",         "Task F: clean re-anchoring sweep (Fig S10)"),
+    ("build",  "build_tables_figures.py",             "Tables 3/4/5 + Figures 5/6 + Fig S9 comparison"),
+    ("panels", "regenerate_panels_a_gj.py",           "Figure 5 panels a + g-j (+ Fig S9 panels)"),
+    ("mode",   "figure_mode_analysis.py",             "Figure S6: Koopman mode analysis"),
+    ("latent", "figure_latent_hparam.py",             "Figure S4: latent / hyperparameter ablation"),
 ]
 
 
