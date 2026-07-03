@@ -114,10 +114,20 @@ def main():
     sig_power = Xn.var(axis=(0, 1))
     rng = np.random.default_rng(SEED)
 
-    # clean baseline
+    # clean baseline -- open-loop free-running (the clean reference for the single-shot
+    # 'realistic IC' scenario)
     pred_clean = C.koopman_rollout(model, Xn[:, 0, :], Un, device=device) * sig_std + sig_mean
     clean = metrics(Xph, pred_clean, B, D)
-    print(f"Clean: %RMSE={clean['pct_rmse_mean']:.2f}  R2={clean['r2_mean']:.3f}")
+    print(f"Clean (open-loop): %RMSE={clean['pct_rmse_mean']:.2f}  R2={clean['r2_mean']:.3f}")
+
+    # clean RE-ANCHORED baseline (streaming with zero noise) -- the matching clean
+    # reference for the streaming curve, so each scenario is compared against its own
+    # no-noise operating point (avoids the spurious clean->30 dB 'dip')
+    pred_stream_clean = (streaming_rollout(model, Xn, Un, np.zeros((B, T, D)), K_REANCHOR, device)
+                         * sig_std + sig_mean)
+    clean_stream = metrics(Xph, pred_stream_clean, B, D)
+    print(f"Clean (re-anchored K={K_REANCHOR}): %RMSE={clean_stream['pct_rmse_mean']:.2f}  "
+          f"R2={clean_stream['r2_mean']:.3f}")
 
     realistic_ic, streaming = {}, {}
     for snr in SNR_DB:
@@ -146,6 +156,7 @@ def main():
         "reanchor_K_steps": K_REANCHOR, "reanchor_interval_s": K_REANCHOR * DT,
         "seed": SEED,
         "clean_baseline": clean,
+        "clean_reanchored_baseline": clean_stream,
         "realistic_ic": realistic_ic,
         "streaming_reanchor": streaming,
     }
@@ -158,6 +169,8 @@ def main():
         w = csv.writer(f)
         w.writerow(["variant", "snr_db", "pct_rmse_mean", "pct_rmse_ci95", "r2_mean"])
         w.writerow(["clean", "inf", clean["pct_rmse_mean"], clean["pct_rmse_ci95"], clean["r2_mean"]])
+        w.writerow(["clean_reanchored", "inf", clean_stream["pct_rmse_mean"],
+                    clean_stream["pct_rmse_ci95"], clean_stream["r2_mean"]])
         for snr in SNR_DB:
             r = realistic_ic[str(snr)]
             w.writerow(["realistic_ic", snr, r["pct_rmse_mean"], r["pct_rmse_ci95"], r["r2_mean"]])
@@ -170,14 +183,14 @@ def main():
     labels = ["Clean"] + [f"{s} dB" for s in SNR_DB]
     x = np.arange(len(labels))
 
-    def curve(d, key):
-        return np.array([clean[key]] + [d[str(s)][key] for s in SNR_DB])
+    def curve(d, key, cpt):
+        return np.array([cpt[key]] + [d[str(s)][key] for s in SNR_DB])
 
-    def ci_pct(d):
-        return np.array([clean["pct_rmse_ci95"]] + [d[str(s)]["pct_rmse_ci95"] for s in SNR_DB])
+    def ci_pct(d, cpt):
+        return np.array([cpt["pct_rmse_ci95"]] + [d[str(s)]["pct_rmse_ci95"] for s in SNR_DB])
 
-    def ci_r2(d):
-        sd = np.array([clean["r2_sd"]] + [d[str(s)]["r2_sd"] for s in SNR_DB])
+    def ci_r2(d, cpt):
+        sd = np.array([cpt["r2_sd"]] + [d[str(s)]["r2_sd"] for s in SNR_DB])
         return 1.96 * sd / np.sqrt(B)
 
     C_REAL, C_STREAM = "#5a286b", "#dda251"      # realistic-IC / streaming
@@ -209,6 +222,8 @@ def main():
     axa.plot(tt[sl], wander_c[sl], color=C_WANDER, lw=2.2, label="Baseline wander")
     axa.plot(tt[sl], total_c[sl], color=C_REAL, lw=1.1, alpha=0.9, label="Total")
     axa.axhline(0, color="#bbb", lw=0.7)
+    _amax = np.max(np.abs(np.concatenate([awgn_c[sl], wander_c[sl], total_c[sl]])))
+    axa.set_ylim(-_amax * 1.15, _amax * 1.9)     # top headroom so the legend clears the traces
     axa.set_xlabel("Time (s)", fontsize=AXLAB); axa.set_ylabel("Noise (norm. units)", fontsize=AXLAB)
     axa.tick_params(labelsize=TICK); axa.grid(alpha=0.25); axa.set_axisbelow(True)
     axa.legend(fontsize=TICK - 1, loc="upper right", framealpha=0.9)
@@ -220,18 +235,24 @@ def main():
     for rt in reanchor_t:
         axb.axvline(rt, color=C_STREAM, ls="--", lw=1.1, alpha=0.75)
     axb.plot([], [], color=C_STREAM, ls="--", lw=1.1, label=f"Re-anchor (every {K_REANCHOR * DT:.0f} s)")
+    _pall = np.concatenate([plv_clean[sl], plv_noisy[sl]])
+    _prng = _pall.max() - _pall.min()
+    axb.set_ylim(_pall.min() - 0.08 * _prng, _pall.max() + 0.55 * _prng)   # top headroom for legend
     axb.set_xlabel("Time (s)", fontsize=AXLAB); axb.set_ylabel(r"$P_{lv}$ (mmHg)", fontsize=AXLAB)
     axb.tick_params(labelsize=TICK); axb.grid(alpha=0.25); axb.set_axisbelow(True)
     axb.legend(fontsize=TICK - 1, loc="upper right", framealpha=0.9)
     axb.set_title("(b)", loc="left", fontsize=13)
 
     # (c) %RMSE vs SNR, shaded CI silhouettes, log-y
-    for d, c, lab, mk in [(realistic_ic, C_REAL, "Realistic IC (AWGN+wander)", "o"),
-                          (streaming, C_STREAM, f"Streaming (K={K_REANCHOR})", "s")]:
-        m, e = curve(d, "pct_rmse_mean"), ci_pct(d)
+    _cmax = 0.0
+    for d, cpt, c, lab, mk in [(realistic_ic, clean, C_REAL, "Realistic IC (AWGN+wander)", "o"),
+                               (streaming, clean_stream, C_STREAM, f"Streaming (K={K_REANCHOR})", "s")]:
+        m, e = curve(d, "pct_rmse_mean", cpt), ci_pct(d, cpt)
         axc.fill_between(x, np.clip(m - e, 1e-3, None), m + e, color=c, alpha=0.18)
         axc.plot(x, m, color=c, lw=2.3, marker=mk, ms=6, label=lab)
+        _cmax = max(_cmax, np.nanmax(m + e))
     axc.set_yscale("log")
+    axc.set_ylim(top=_cmax * 3.2)     # top headroom so the upper-left legend clears the curves
     axc.set_xticks(x); axc.set_xticklabels(labels, fontsize=TICK)
     axc.set_xlabel("Noise level (SNR)", fontsize=AXLAB); axc.set_ylabel("%RMSE (log)", fontsize=AXLAB)
     axc.tick_params(labelsize=TICK); axc.grid(axis="y", which="both", ls="--", alpha=0.3); axc.set_axisbelow(True)
@@ -241,9 +262,9 @@ def main():
     axc.set_title("(c)", loc="left", fontsize=13)
 
     # (d) R² vs SNR, shaded CI silhouettes
-    for d, c, lab, mk in [(realistic_ic, C_REAL, "Realistic IC", "o"),
-                          (streaming, C_STREAM, f"Streaming (K={K_REANCHOR})", "s")]:
-        m, e = curve(d, "r2_mean"), ci_r2(d)
+    for d, cpt, c, lab, mk in [(realistic_ic, clean, C_REAL, "Realistic IC", "o"),
+                               (streaming, clean_stream, C_STREAM, f"Streaming (K={K_REANCHOR})", "s")]:
+        m, e = curve(d, "r2_mean", cpt), ci_r2(d, cpt)
         axd.fill_between(x, m - e, m + e, color=c, alpha=0.18)
         axd.plot(x, m, color=c, lw=2.3, marker=mk, ms=6, label=lab)
     axd.axhline(0, color="#888", ls=":", lw=0.9)
