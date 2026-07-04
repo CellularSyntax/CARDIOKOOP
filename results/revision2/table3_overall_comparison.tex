@@ -1,19 +1,19 @@
 \begin{table}
-\caption{Overall forecasting comparison on the seed-42 test split ($B=50$, 1499-step horizon). %RMSE = mean per-signal PTP-normalised RMSE averaged over signals; $R^2$ pooled. DLinear/NLinear (Zeng et al. 2023) added.}
+\caption{Overall forecasting comparison on the seed-42 test split ($B=50$, 1499-step horizon).  %RMSE = mean per-signal PTP-normalised RMSE averaged over signals, reported as mean $\pm$ 95\% CI across the $B=50$ test trajectories.  $R^2$ is given two ways: per-signal (uniform average of the 12 per-signal $R^2$) and per-trajectory (each trajectory flattened over signals and steps, then averaged).  DLinear/NLinear (Zeng et al. 2023) added.}
 \label{tab:overall}
-\begin{tabular}{lrrrrrr}
+\begin{tabular}{lrrrrrrr}
 \toprule
- & R2 & %RMSE (mean +/- CI) & Inference Time (s) & Speedup vs sim & Parameter Count & Training Time (min) \\
-Model &  &  &  &  &  &  \\
+ & R2 (per-signal) & R2 (per-traj) & %RMSE (mean +/- 95% CI) & Inference Time (s) & Speedup vs sim & Parameter Count & Training Time (min) \\
+Model &  &  &  &  &  &  &  \\
 \midrule
-Koopman & 0.691000 & 17.5 +/- 1.4 & 0.005 & 379.2x & 17,239,600 & 47 \\
-GRU & -0.282000 & 60.9 +/- 3.2 & 0.64 & 2.9x & 814,092 & 289 \\
-LSTM & -0.537000 & 97.8 +/- 10.9 & 0.75 & 2.5x & 1,083,404 & 312 \\
-BiLSTM & -0.275000 & 76.4 +/- 7.7 & 1.6 & 1.2x & 2,166,796 & 401 \\
-MLP & -18.829000 & 132.7 +/- 55.2 & 0.169 & 12.1x & 269,324 & 9 \\
-AR(20) & 0.326000 & 34.5 +/- 1.1 & 0.008 & 257.2x & 240 & <1 \\
-DLinear & 0.983000 & 3.0 +/- 0.6 & <0.001 & 6028x & 429,120 & ~2 \\
-NLinear & 0.982000 & 3.6 +/- 0.6 & <0.001 & 1.139e+04x & 214,560 & ~2 \\
+Koopman & 0.735000 & 0.687000 & 17.5 +/- 1.4 & 0.005 & 379.2x & 17,239,600 & 47 \\
+GRU & -1.459000 & -0.312000 & 60.9 +/- 3.2 & 0.64 & 2.9x & 814,092 & 289 \\
+LSTM & -6.501000 & -0.589000 & 97.8 +/- 10.9 & 0.75 & 2.5x & 1,083,404 & 312 \\
+BiLSTM & -2.681000 & -0.299000 & 76.4 +/- 7.7 & 1.6 & 1.2x & 2,166,796 & 401 \\
+MLP & -38.525000 & -17.731000 & 132.7 +/- 55.2 & 0.169 & 12.1x & 269,324 & 9 \\
+AR(20) & 0.057000 & 0.327000 & 34.5 +/- 1.1 & 0.008 & 257.2x & 240 & <1 \\
+DLinear & 0.987000 & 0.983000 & 3.0 +/- 0.6 & <0.001 & 6028x & 429,120 & ~2 \\
+NLinear & 0.982000 & 0.981000 & 3.6 +/- 0.6 & <0.001 & 1.139e+04x & 214,560 & ~2 \\
 \bottomrule
 \end{tabular}
 \end{table}

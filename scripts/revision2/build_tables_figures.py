@@ -306,14 +306,33 @@ def main():
     results = {m: C.compute_results_dict(Xte, preds[m], Uph, inftimes[m], nparams[m]) for m in models}
 
     # ── Table 3: overall comparison ───────────────────────────────────────────
+    # R^2 is reported under BOTH conventions that appear in the manuscript so that
+    # the overall table and the noise table (Table 5) are directly comparable and
+    # no reader has to reverse-engineer which definition a given number used:
+    #   * per-signal : sklearn uniform-average of the 12 per-signal R^2 (each
+    #                  signal pooled over all trajectories & steps).  This is the
+    #                  original Table-3 definition (postprocess_koopman's
+    #                  ``global_r2_flat = r2_score(seq_all, pred_all)``).
+    #   * per-traj   : each trajectory flattened over signals & steps, R^2 computed
+    #                  per trajectory then averaged over the B=50 trajectories.
+    #                  This is the Table-5 (``clean_baseline``) definition.
+    # %RMSE uses the identical per-signal-PTP definition for both tables; the
+    # error bar is a 95% CI (1.96*SD/sqrt(B)), now labelled as such (the old
+    # revision-1 Table 3 mislabelled this same CI as an SD).
+    from sklearn.metrics import r2_score as _skr2
     rows3 = []
     for m in models:
         r = results[m]
         pct = r["pct_per_traj_ps"]; inf = r["inference_times_s"].mean()
+        tp = r["true_per_trajectory"]; pp = r["pred_per_trajectory"]
+        r2_persig  = float(_skr2(tp.reshape(-1, D), pp.reshape(-1, D),
+                                 multioutput="uniform_average"))
+        r2_pertraj = float(np.mean([C.r2_flat(tp[i], pp[i]) for i in range(B)]))
         rows3.append({
             "Model": m,
-            "R2": round(r["global_r2_flat"], 3),
-            "%RMSE (mean +/- CI)": f"{pct.mean():.1f} +/- {C.ci95(pct):.1f}",
+            "R2 (per-signal)": round(r2_persig, 3),
+            "R2 (per-traj)": round(r2_pertraj, 3),
+            "%RMSE (mean +/- 95% CI)": f"{pct.mean():.1f} +/- {C.ci95(pct):.1f}",
             "Inference Time (s)": ("<0.001" if inf < 1e-3 else f"{inf:.3g}"),
             "Speedup vs sim": f"{speedup[m]:.4g}x",
             "Parameter Count": f"{nparams[m]:,}",
@@ -322,13 +341,17 @@ def main():
     df3 = pd.DataFrame(rows3).set_index("Model")
     df3.to_csv(os.path.join(C.REV2_DIR, "table3_overall_comparison.csv"))
     with open(os.path.join(C.REV2_DIR, "table3_overall_comparison.tex"), "w") as f:
-        f.write(df3.to_latex(escape=False, column_format="lrrrrrr",
+        f.write(df3.to_latex(escape=False, column_format="lrrrrrrr",
                 caption=("Overall forecasting comparison on the seed-42 test split "
-                         "($B=50$, 1499-step horizon). %RMSE = mean per-signal "
-                         "PTP-normalised RMSE averaged over signals; $R^2$ pooled. "
+                         "($B=50$, 1499-step horizon).  %RMSE = mean per-signal "
+                         "PTP-normalised RMSE averaged over signals, reported as "
+                         "mean $\\pm$ 95\\% CI across the $B=50$ test trajectories.  "
+                         "$R^2$ is given two ways: per-signal (uniform average of the "
+                         "12 per-signal $R^2$) and per-trajectory (each trajectory "
+                         "flattened over signals and steps, then averaged).  "
                          "DLinear/NLinear (Zeng et al. 2023) added."),
                 label="tab:overall"))
-    print("\n=== Table 3 (overall, test1, consistent metrics) ===")
+    print("\n=== Table 3 (overall, test1, consistent metrics; R^2 per-signal & per-traj) ===")
     print(df3.to_string())
 
     # ── Table 4: per-signal %RMSE and R^2 ─────────────────────────────────────
@@ -384,22 +407,54 @@ def main():
         return np.array(pm), np.array(rm)
 
     labels = ["Clean"] + [f"{s} dB" for s in SNR_DB]
-    rows5 = []
+
+    # ── Table 5: %RMSE and R^2 (mean +/- 95% CI) under AWGN, all architectures ──
+    # The CLEAN column is sourced from the SAME predictions as Table 3 (results[m])
+    # so the two tables' clean baselines are IDENTICAL for every model.  The noisy
+    # rows come from the committed noise harnesses (task3 / task3b / linear); their
+    # own clean baselines are discarded here because they are a separate,
+    # non-reproducible realisation of the divergent RNN rollouts (cuDNN
+    # nondeterminism => ~1 pp wobble).  R^2 is the per-trajectory flattened
+    # definition throughout (the Table-5 convention), matching Table 3's
+    # "R2 (per-traj)" column.
+    def _clean_cell(m):
+        r = results[m]
+        pct = r["pct_per_traj_ps"]
+        tp = r["true_per_trajectory"]; pp = r["pred_per_trajectory"]
+        r2f = np.array([C.r2_flat(tp[i], pp[i]) for i in range(B)])
+        return pct.mean(), C.ci95(pct), r2f.mean(), C.ci95(r2f)
+
+    def _noisy_cell(m, snr):
+        if m == "Koopman":                d = nr_koop["noisy"][str(snr)]
+        elif m in ("DLinear", "NLinear"): d = nr_lin[m]["noisy"][str(snr)]
+        else:                             d = nr_bl[m]["noisy"][str(snr)]
+        return (d["pct_rmse_mean"], d["pct_rmse_ci95"],
+                d["r2_mean"], 1.96 * d["r2_sd"] / np.sqrt(B))
+
+    pct_rows, r2_rows = [], []
     for li, lab in enumerate(labels):
-        row = {"SNR": lab}
+        pr = {"SNR Level": lab}; rr = {"SNR Level": lab}
         for m in models:
-            pm, _ = curve(m)
-            row[m] = round(float(pm[li]), 1)
-        rows5.append(row)
-    df5 = pd.DataFrame(rows5).set_index("SNR")
+            pm, pc, rm, rc = _clean_cell(m) if li == 0 else _noisy_cell(m, SNR_DB[li - 1])
+            pr[m] = f"{pm:.1f} +/- {pc:.1f}"
+            rr[m] = f"{rm:.2f} +/- {rc:.2f}"
+        pct_rows.append(pr); r2_rows.append(rr)
+    df5_pct = pd.DataFrame(pct_rows).set_index("SNR Level")
+    df5_r2  = pd.DataFrame(r2_rows).set_index("SNR Level")
+    df5 = pd.concat({"%RMSE (mean +/- 95% CI)": df5_pct, "R2 (mean +/- 95% CI)": df5_r2}, axis=0)
+    df5.index.names = ["Metric", "SNR Level"]
     df5.to_csv(os.path.join(C.REV2_DIR, "table5_noise_robustness_full.csv"))
     with open(os.path.join(C.REV2_DIR, "table5_noise_robustness_full.tex"), "w") as f:
-        f.write(df5.to_latex(escape=False, column_format="l" + "r" * len(models),
-                caption=("%RMSE under AWGN applied to the initial observation/warm-up "
-                         "window, all architectures (incl. DLinear/NLinear), seed-42 "
-                         "test split, no retraining."),
+        f.write(df5.to_latex(escape=False, column_format="ll" + "r" * len(models),
+                caption=("Noise robustness under AWGN applied to the initial "
+                         "observation / warm-up window, all architectures "
+                         "(incl. DLinear/NLinear), seed-42 test split, no retraining. "
+                         "Values are mean $\\pm$ 95\\% CI across $B=50$ trajectories.  "
+                         "The Clean column is identical to Table~\\ref{tab:overall} "
+                         "(same predictions); $R^2$ is the per-trajectory flattened "
+                         "definition."),
                 label="tab:noise_full"))
-    print("\n=== Table 5 (AWGN %RMSE, test1) ===")
+    print("\n=== Table 5 (AWGN, test1; %RMSE and R^2, mean +/- 95% CI; clean == Table 3) ===")
     print(df5.to_string())
 
     x = np.arange(len(labels))
