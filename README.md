@@ -5,14 +5,18 @@
 # **CARDIOKOOP**  
 *Control-aware Koopman deep learning framework for real-time hemodynamic forecasting and cardiovascular digital twin applications.*
 
+[![Dataset on Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.21163127.svg)](https://doi.org/10.5281/zenodo.21163127)
+
 CARDIOKOOP provides a high-performance pipeline to learn **Koopman eigenfunctions** from multivariate cardiovascular simulations, enabling **real-time surrogate modeling** of pressures, volumes, and flow signals. The framework includes tools for dataset generation (via a validated lumped-parameter model), neural Koopman operator training, benchmarking against RNN baselines (LSTM, GRU, BiLSTM), and visualization scripts for reproducible analysis.
 
 ---
 
 ## **Citation**
-If you use this code, data, or pre-trained models in your research, please cite:  
+If you use this code, data, or pre-trained models in your research, please cite both the article and the dataset:  
 
-**Haberbusch M., Brandt L.B., Aprile M., Lung D., Kuijper A., Moscato F.** Real-Time Hemodynamic Prediction via Control-Aware Koopman Operator Models.  *Journal Name Goes Here*, 2025. [DOI pending]
+**Article** — Haberbusch M., Brandt L.B., Aprile M., Lung D., Kuijper A., Moscato F. Real-Time Hemodynamic Prediction via Control-Aware Koopman Operator Models.  *Journal Name Goes Here*, 2025. [DOI pending]
+
+**Dataset** — Haberbusch M., Brandt L.B., Aprile M., Lung D., Kuijper A., Moscato F. *CARDIOKOOP — In-silico cardiovascular hemodynamic dataset with control perturbations* [Data set]. Zenodo. https://doi.org/10.5281/zenodo.21163127
 
 ---
 
