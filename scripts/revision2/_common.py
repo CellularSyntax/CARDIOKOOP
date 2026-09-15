@@ -33,7 +33,9 @@ from sklearn.metrics import r2_score as _sk_r2
 # ───────────────────────── paths ─────────────────────────
 REPO_ROOT   = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC_DIR     = os.path.join(REPO_ROOT, "src")
-DATA_DIR    = os.path.join(REPO_ROOT, "data")
+# CARDIOKOOP_DATA_DIR lets the Docker/CI reproduction point at a writable copy of the
+# seed-42 splits when the repository itself is mounted read-only (default: <repo>/data).
+DATA_DIR    = os.environ.get("CARDIOKOOP_DATA_DIR") or os.path.join(REPO_ROOT, "data")
 RESULT_DIR  = os.path.join(REPO_ROOT, "results")
 REV2_DIR    = os.path.join(RESULT_DIR, "revision2")
 FIG_DIR     = os.path.join(RESULT_DIR, "figures")

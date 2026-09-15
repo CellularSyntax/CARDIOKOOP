@@ -55,6 +55,7 @@ Usage
 -----
   python scripts/revision3/export_manuscript_tables.py            # float64 Koopman rollout (default)
   python scripts/revision3/export_manuscript_tables.py --dtype float32
+  python scripts/revision3/export_manuscript_tables.py --out-dir out/   # write elsewhere (Docker/CI check)
 
 Numerical note: the 1499-step rollout amplifies floating-point differences;
 CPU-f32 / CPU-f64 / GPU runs of the same checkpoint differ by <= 0.1 pp %RMSE
@@ -146,7 +147,14 @@ def main():
     ap.add_argument("--dtype", choices=["float32", "float64"], default="float64",
                     help="precision of the Koopman rollout (default float64)")
     ap.add_argument("--threads", type=int, default=0, help="torch CPU threads (0 = default)")
+    ap.add_argument("--out-dir", default=None,
+                    help="write all outputs to this directory instead of results/revision3 "
+                         "(used by scripts/reproduce.sh / the Docker CI check)")
     args = ap.parse_args()
+    if args.out_dir:
+        global REV3_DIR
+        REV3_DIR = os.path.abspath(args.out_dir)
+        os.makedirs(REV3_DIR, exist_ok=True)
     dtype = torch.float64 if args.dtype == "float64" else torch.float32
     if args.threads:
         torch.set_num_threads(args.threads)
