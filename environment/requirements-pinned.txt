@@ -1,0 +1,28 @@
+# CARDIOKOOP v1.1.0 — pinned Python environment for the manuscript revision runs
+# (Array, 2026: "Real-Time Hemodynamic Prediction via Control-Aware Koopman Operator Models").
+#
+# These are the pinned versions used for the revision runs (PyTorch 2.6 / Optuna 4.7.0 as stated in
+# the manuscript; every other package pinned to a PyPI release compatible with PyTorch 2.6).
+# AUTHORS: if the `pip freeze` output of the original workstation (AMD Ryzen 7 3700X, 64 GB RAM,
+# NVIDIA RTX 3070 Ti 8 GB) differs from the versions below, replace this file with that output.
+#
+# Install (CUDA build of torch 2.6.0 from the PyTorch index, e.g. cu124):
+#   pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+#   pip install -r environment/requirements-pinned.txt
+#   pip install -e .
+# The CPU-only build (`pip install torch==2.6.0`) reproduces every number to <= 0.1 pp %RMSE
+# (see README.md, "Numerical reproducibility").
+torch==2.6.0
+optuna==4.7.0
+numpy==2.2.6
+scipy==1.15.2
+pandas==2.2.3
+scikit-learn==1.6.1
+statsmodels==0.14.4
+matplotlib==3.10.1
+seaborn==0.13.2
+plotly==6.0.1
+kaleido==0.2.1
+fastdtw==0.3.4
+tqdm==4.67.1
+notebook==7.3.3

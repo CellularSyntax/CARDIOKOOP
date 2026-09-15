@@ -1,0 +1,66 @@
+cff-version: 1.2.0
+message: "If you use CARDIOKOOP (code, checkpoints or data), please cite both the software and the Array article below."
+type: software
+title: "CARDIOKOOP: Control-aware Koopman operator models for real-time hemodynamic prediction"
+version: 1.1.0
+date-released: 2026-09-15
+doi: 10.5281/zenodo.22771013
+license: MIT
+repository-code: "https://github.com/CellularSyntax/CARDIOKOOP"
+url: "https://github.com/CellularSyntax/CARDIOKOOP/tree/v1.1.0"
+keywords:
+  - Koopman operator
+  - cardiovascular digital twin
+  - hemodynamics
+  - surrogate model
+  - deep learning
+authors:
+  - family-names: Haberbusch
+    given-names: Max
+    affiliation: "Medical University of Vienna; Ludwig Boltzmann Institute for Cardiovascular Research"
+  - family-names: Brandt
+    given-names: Lars Berend
+    affiliation: "Medical University of Vienna; TU Darmstadt"
+  - family-names: Aprile
+    given-names: Martina
+    affiliation: "Medical University of Vienna"
+  - family-names: Lung
+    given-names: David
+    affiliation: "Medical University of Vienna"
+  - family-names: Kuijper
+    given-names: Arjan
+    affiliation: "TU Darmstadt; Fraunhofer IGD"
+  - family-names: Moscato
+    given-names: Francesco
+    affiliation: "Medical University of Vienna; Ludwig Boltzmann Institute for Cardiovascular Research; Austrian Cluster for Tissue Regeneration"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22771013
+    description: "Zenodo software archive, v1.1.0 (resolved data files, checkpoints, results)"
+  - type: doi
+    value: 10.5281/zenodo.21993894
+    description: "Zenodo concept DOI (all software versions)"
+  - type: doi
+    value: 10.5281/zenodo.21163127
+    description: "Zenodo dataset record: seed-42 train/validation/test splits"
+preferred-citation:
+  type: article
+  title: "Real-Time Hemodynamic Prediction via Control-Aware Koopman Operator Models"
+  journal: Array
+  publisher:
+    name: Elsevier
+  year: 2026
+  status: in-press
+  authors:
+    - family-names: Haberbusch
+      given-names: Max
+    - family-names: Brandt
+      given-names: Lars Berend
+    - family-names: Aprile
+      given-names: Martina
+    - family-names: Lung
+      given-names: David
+    - family-names: Kuijper
+      given-names: Arjan
+    - family-names: Moscato
+      given-names: Francesco

@@ -1,0 +1,23 @@
+{
+  "script": "scripts/revision3/export_manuscript_tables.py",
+  "split": "test1",
+  "seed": 42,
+  "checkpoint": "results/koopman/csv_data_500_12sigs_2025_06_18_18_50_13_876051_model.ckpt",
+  "n_params_koopman": 17239600,
+  "rollout_dtype": "float64",
+  "device": "cpu",
+  "torch": "2.12.1",
+  "numpy": "2.4.6",
+  "python": "3.11.15",
+  "platform": "macOS-15.6.1-arm64-arm-64bit",
+  "cpu": "arm",
+  "gpu": null,
+  "wallclock_s": {
+    "koopman_rollout": 37.4276819229126,
+    "mlp_rollout": 4.141993999481201,
+    "ar_fit_and_rollout": 5.698267936706543,
+    "total": 53.81179189682007
+  },
+  "koopman_pct_rmse_mean": 17.499719610417934,
+  "koopman_r2_pooled_mean": 0.6880574622215869
+}

@@ -1,0 +1,173 @@
+{
+  "metric": "pct_per_traj_ps (%RMSE per trajectory, averaged over signals)",
+  "n_trajectories": 50,
+  "unit_of_analysis": "test trajectory",
+  "models": [
+    "Koopman",
+    "LSTM",
+    "GRU",
+    "BiLSTM",
+    "MLP",
+    "AR(20)"
+  ],
+  "summary": {
+    "Koopman": {
+      "mean": 17.499719610417934,
+      "sd": 5.294146401919318,
+      "ci95": 1.467462513985472,
+      "median": 16.40520317756616,
+      "q25": 14.505029792180093,
+      "q75": 18.987132946901603
+    },
+    "LSTM": {
+      "mean": 97.80268259406225,
+      "sd": 39.37804714289149,
+      "ci95": 10.915037792531873,
+      "median": 96.88971146681672,
+      "q25": 66.51249192437359,
+      "q75": 122.62928272653762
+    },
+    "GRU": {
+      "mean": 60.887208243874284,
+      "sd": 11.697119212756865,
+      "ci95": 3.242276027749629,
+      "median": 58.41256273665485,
+      "q25": 51.389287696572666,
+      "q75": 67.69143435102494
+    },
+    "BiLSTM": {
+      "mean": 76.4430336221901,
+      "sd": 27.841170509682378,
+      "ci95": 7.717178741718396,
+      "median": 71.86995209202425,
+      "q25": 55.23224461076065,
+      "q75": 91.27292479872631
+    },
+    "MLP": {
+      "mean": 132.24365743445279,
+      "sd": 198.95157230967763,
+      "ci95": 55.14656231589633,
+      "median": 38.60577662651244,
+      "q25": 26.47826579819361,
+      "q75": 76.70088554583315
+    },
+    "AR(20)": {
+      "mean": 34.48601953534047,
+      "sd": 4.107017030256279,
+      "ci95": 1.1384070402767976,
+      "median": 33.856608272249936,
+      "q25": 31.044926090219327,
+      "q75": 37.2880195821177
+    }
+  },
+  "shapiro_wilk": {
+    "Koopman": {
+      "W": 0.8236690285618324,
+      "p": 3.221194048952085e-06,
+      "normal_at_0_05": false
+    },
+    "LSTM": {
+      "W": 0.9511905766271392,
+      "p": 0.03818982088582476,
+      "normal_at_0_05": false
+    },
+    "GRU": {
+      "W": 0.9404662333925556,
+      "p": 0.01405765695619137,
+      "normal_at_0_05": false
+    },
+    "BiLSTM": {
+      "W": 0.9112987255758181,
+      "p": 0.0011594664103968164,
+      "normal_at_0_05": false
+    },
+    "MLP": {
+      "W": 0.6122519395134107,
+      "p": 2.973604369893275e-10,
+      "normal_at_0_05": false
+    },
+    "AR(20)": {
+      "W": 0.9203892186814614,
+      "p": 0.002435610158675118,
+      "normal_at_0_05": false
+    }
+  },
+  "friedman": {
+    "models": [
+      "Koopman",
+      "LSTM",
+      "GRU",
+      "BiLSTM",
+      "MLP",
+      "AR(20)"
+    ],
+    "k": 6,
+    "n": 50,
+    "statistic": 175.5542857142857,
+    "df": 5,
+    "p": 4.7611005481112675e-36
+  },
+  "wilcoxon_koopman_vs_baselines": {
+    "LSTM": {
+      "statistic_W": 0.0,
+      "p_two_sided": 1.7763568394002505e-15,
+      "p_bonferroni_x5": 8.881784197001252e-15,
+      "n_trajectories_worse_than_koopman": 50,
+      "n_trajectories_better_than_koopman": 0,
+      "n_ties": 0,
+      "median_paired_difference_pp": 80.33006595955474,
+      "mean_paired_difference_pp": 80.3029629836443,
+      "method": "exact two-sided paired Wilcoxon signed-rank (scipy), zeros discarded"
+    },
+    "GRU": {
+      "statistic_W": 0.0,
+      "p_two_sided": 1.7763568394002505e-15,
+      "p_bonferroni_x5": 8.881784197001252e-15,
+      "n_trajectories_worse_than_koopman": 50,
+      "n_trajectories_better_than_koopman": 0,
+      "n_ties": 0,
+      "median_paired_difference_pp": 43.900082596401646,
+      "mean_paired_difference_pp": 43.38748863345635,
+      "method": "exact two-sided paired Wilcoxon signed-rank (scipy), zeros discarded"
+    },
+    "BiLSTM": {
+      "statistic_W": 0.0,
+      "p_two_sided": 1.7763568394002505e-15,
+      "p_bonferroni_x5": 8.881784197001252e-15,
+      "n_trajectories_worse_than_koopman": 50,
+      "n_trajectories_better_than_koopman": 0,
+      "n_ties": 0,
+      "median_paired_difference_pp": 54.79817973609748,
+      "mean_paired_difference_pp": 58.94331401177218,
+      "method": "exact two-sided paired Wilcoxon signed-rank (scipy), zeros discarded"
+    },
+    "MLP": {
+      "statistic_W": 20.0,
+      "p_two_sided": 6.590283874174929e-13,
+      "p_bonferroni_x5": 3.2951419370874646e-12,
+      "n_trajectories_worse_than_koopman": 47,
+      "n_trajectories_better_than_koopman": 3,
+      "n_ties": 0,
+      "median_paired_difference_pp": 21.527732216901157,
+      "mean_paired_difference_pp": 114.74393782403486,
+      "method": "exact two-sided paired Wilcoxon signed-rank (scipy), zeros discarded"
+    },
+    "AR(20)": {
+      "statistic_W": 0.0,
+      "p_two_sided": 1.7763568394002505e-15,
+      "p_bonferroni_x5": 8.881784197001252e-15,
+      "n_trajectories_worse_than_koopman": 50,
+      "n_trajectories_better_than_koopman": 0,
+      "n_ties": 0,
+      "median_paired_difference_pp": 17.828115914144735,
+      "mean_paired_difference_pp": 16.98629992492254,
+      "method": "exact two-sided paired Wilcoxon signed-rank (scipy), zeros discarded"
+    }
+  },
+  "bonferroni": {
+    "n_comparisons": 5,
+    "alpha_family": 0.05,
+    "alpha_per_test": 0.01
+  },
+  "note": "Shapiro\u2013Wilk p < 0.05 for all models motivates the non-parametric tests. Friedman omnibus across the six autoregressive/dynamical models, followed by paired two-sided Wilcoxon signed-rank tests of Koopman vs. each of the five baselines with Bonferroni correction (x5). DLinear/NLinear are direct (non-autoregressive) forecasters and are not part of the omnibus test."
+}
