@@ -224,8 +224,9 @@ printed, in a pinned environment on an independent x86-64 machine. The verificat
 flags); container wall time ≈ 100 s (data download ≈ 90 s, export ≈ 80 s), total job ≈ 7 min including the image build.
 
 **Release image.** `ghcr.io/cellularsyntax/cardiokoop:v1.2.0`, built and pushed by the tag-triggered run of `reproduce.yml`.
-Digest: see GitHub release v1.2.0 (`https://github.com/CellularSyntax/CARDIOKOOP/releases/tag/v1.2.0`) and the Zenodo record
-10.5281/zenodo.22776287.
+The `:v1.2.0` image digest is recorded in the v1.2.0 GitHub release notes
+(`https://github.com/CellularSyntax/CARDIOKOOP/releases/tag/v1.2.0`) and in the Zenodo record description
+(10.5281/zenodo.22776287); verify with `docker buildx imagetools inspect ghcr.io/cellularsyntax/cardiokoop:v1.2.0`.
 
 ---
 
