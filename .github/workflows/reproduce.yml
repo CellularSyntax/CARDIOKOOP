@@ -2,12 +2,12 @@ name: Reproduce manuscript tables (Docker)
 
 # Builds the reproduction image, regenerates Tables 3/4/5 + statistics from the frozen
 # checkpoints on the seed-42 test split inside the container, and fails if any number differs
-# from the committed results/revision3 at manuscript rounding (scripts/revision3/compare_results.py).
+# from the committed results/tables at manuscript rounding (scripts/tables/compare_results.py).
 # On pushes to main and on v* tags the verified image is pushed to ghcr.io/cellularsyntax/cardiokoop.
 
 on:
   push:
-    branches: [main, docker-ci]
+    branches: [main]
     tags: ['v*']
   pull_request:
   workflow_dispatch:

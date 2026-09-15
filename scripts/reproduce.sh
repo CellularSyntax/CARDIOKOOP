@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # CARDIOKOOP — one-command reproduction of the manuscript Tables 3, 4, 5 and the statistics
 # paragraph (seed-42 test1 split, frozen checkpoint), followed by a comparison against the
-# committed results/revision3 at manuscript rounding.  This is the default CMD of the
+# committed results/tables at manuscript rounding.  This is the default CMD of the
 # Docker image and the check that runs in GitHub Actions (.github/workflows/reproduce.yml).
 #
 #   (a) make sure the seed-42 splits are real files (the repository stores *.csv via Git-LFS;
@@ -9,8 +9,8 @@
 #       downloaded from the Zenodo dataset record 10.5281/zenodo.21163127 (record 21163128) and
 #       verified against the MD5 checksums published on that record.  If Zenodo is unreachable
 #       and the repository is a writable git checkout, `git lfs pull` is tried instead.
-#   (b) python scripts/revision3/export_manuscript_tables.py --out-dir $REPRO_OUT
-#   (c) python scripts/revision3/compare_results.py  (exit 1 on any difference beyond rounding)
+#   (b) python scripts/tables/export_manuscript_tables.py --out-dir $REPRO_OUT
+#   (c) python scripts/tables/compare_results.py  (exit 1 on any difference beyond rounding)
 #
 # Environment variables
 #   REPRO_REPO          repository root            (default: directory above this script)
@@ -43,7 +43,7 @@ REQUIRED_FILES=(
   "normalization_std.npy            7b2fd9dbbe470d76f8aea83d4b7812ce  224"
 )
 # (train1_u.csv, val1_*.csv and cardiovascular_parameter_space.csv are not needed by the
-#  revision-3 export script and are therefore not downloaded.)
+#  table export script and are therefore not downloaded.)
 
 log() { printf '[reproduce] %s\n' "$*"; }
 
@@ -120,20 +120,20 @@ log "data ready in $(( $(date +%s) - t_start )) s"
 # ── (b) regenerate the manuscript tables ───────────────────────────────────────────────────
 ARGS=(--out-dir "$OUT" --dtype "${REPRO_DTYPE:-float64}")
 [ -n "${REPRO_THREADS:-}" ] && ARGS+=(--threads "$REPRO_THREADS")
-log "running: python scripts/revision3/export_manuscript_tables.py ${ARGS[*]}"
+log "running: python scripts/tables/export_manuscript_tables.py ${ARGS[*]}"
 t0=$(date +%s)
-( cd "$REPO" && python scripts/revision3/export_manuscript_tables.py "${ARGS[@]}" ) 2>&1 | tee "$OUT/export_manuscript_tables.log"
+( cd "$REPO" && python scripts/tables/export_manuscript_tables.py "${ARGS[@]}" ) 2>&1 | tee "$OUT/export_manuscript_tables.log"
 log "export finished in $(( $(date +%s) - t0 )) s"
 
 # ── (c) compare with the committed results at manuscript rounding ──────────────────────────
 if [ "${REPRO_SKIP_COMPARE:-0}" = "1" ]; then
   log "REPRO_SKIP_COMPARE=1 -> skipping comparison"; exit 0
 fi
-CMP=(--committed "$REPO/results/revision3" --fresh "$OUT" --report "$OUT/compare_report.md")
+CMP=(--committed "$REPO/results/tables" --fresh "$OUT" --report "$OUT/compare_report.md")
 [ "${REPRO_STRICT:-0}" = "1" ] && CMP+=(--strict)
-log "running: python scripts/revision3/compare_results.py ${CMP[*]}"
+log "running: python scripts/tables/compare_results.py ${CMP[*]}"
 set +e
-( cd "$REPO" && python scripts/revision3/compare_results.py "${CMP[@]}" ) 2>&1 | tee "$OUT/compare_results.log"
+( cd "$REPO" && python scripts/tables/compare_results.py "${CMP[@]}" ) 2>&1 | tee "$OUT/compare_results.log"
 rc=${PIPESTATUS[0]}
 set -e
 log "total wall time $(( $(date +%s) - t_start )) s; compare exit code $rc"

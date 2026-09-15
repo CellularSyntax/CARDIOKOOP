@@ -1,4 +1,4 @@
-# CARDIOKOOP — reproduction image for the manuscript tables (Array, revision 3).
+# CARDIOKOOP — reproduction image for the manuscript tables (release v1.2.0).
 #
 #   docker build -t cardiokoop .
 #   docker run --rm -v "$PWD/out:/workspace/out" cardiokoop          # regenerate + compare
