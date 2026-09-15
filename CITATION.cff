@@ -4,7 +4,7 @@ type: software
 title: "CARDIOKOOP: Control-aware Koopman operator models for real-time hemodynamic prediction"
 version: 1.1.0
 date-released: 2026-09-15
-doi: 10.5281/zenodo.22771013
+doi: 10.5281/zenodo.22771300
 license: MIT
 repository-code: "https://github.com/CellularSyntax/CARDIOKOOP"
 url: "https://github.com/CellularSyntax/CARDIOKOOP/tree/v1.1.0"
@@ -35,7 +35,7 @@ authors:
     affiliation: "Medical University of Vienna; Ludwig Boltzmann Institute for Cardiovascular Research; Austrian Cluster for Tissue Regeneration"
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.22771013
+    value: 10.5281/zenodo.22771300
     description: "Zenodo software archive, v1.1.0 (resolved data files, checkpoints, results)"
   - type: doi
     value: 10.5281/zenodo.21993894

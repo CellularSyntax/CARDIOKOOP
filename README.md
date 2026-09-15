@@ -5,7 +5,7 @@
 # **CARDIOKOOP**
 *Control-aware Koopman deep learning framework for real-time hemodynamic forecasting and cardiovascular digital twin applications.*
 
-[![Software DOI](https://img.shields.io/badge/Zenodo%20software-10.5281%2Fzenodo.22771013-blue)](https://doi.org/10.5281/zenodo.22771013)
+[![Software DOI](https://img.shields.io/badge/Zenodo%20software-10.5281%2Fzenodo.22771300-blue)](https://doi.org/10.5281/zenodo.22771300)
 [![Dataset DOI](https://img.shields.io/badge/Zenodo%20dataset-10.5281%2Fzenodo.21163127-blue)](https://doi.org/10.5281/zenodo.21163127)
 [![Release](https://img.shields.io/badge/release-v1.1.0-green)](https://github.com/CellularSyntax/CARDIOKOOP/releases/tag/v1.1.0)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
@@ -28,9 +28,12 @@ If you use this code, data or pre-trained models, please cite the article **and*
 
 | Archive | DOI |
 |---|---|
-| Software, checkpoints, data and results — **v1.1.0** (this release; self-contained, all data files resolved) | [10.5281/zenodo.22771013](https://doi.org/10.5281/zenodo.22771013) |
+| Software, checkpoints, data and results — **v1.1.0** (this release; self-contained, all data files resolved) | [10.5281/zenodo.22771300](https://doi.org/10.5281/zenodo.22771300) |
 | Software — all versions (concept DOI) | [10.5281/zenodo.21993894](https://doi.org/10.5281/zenodo.21993894) |
 | Dataset — seed-42 train/validation/test splits | [10.5281/zenodo.21163127](https://doi.org/10.5281/zenodo.21163127) |
+
+> **Note on Zenodo versions.** Record 10.5281/zenodo.22771013 is a GitHub-integration snapshot of tag v1.1.0 that contains Git-LFS pointer files only; the self-contained v1.1.0 archive with all data files resolved is 10.5281/zenodo.22771300. The concept DOI 10.5281/zenodo.21993894 always resolves to the latest version.
+
 
 ---
 
@@ -188,7 +191,7 @@ therefore bit-identical everywhere. Use `--dtype float64` (default) for the most
 All 523 `*.csv` files (`data/` splits 251 MB, `raw_data/csv_sims/` 662 MB, `results/**/*.csv`) are stored with **Git LFS**
 (`.gitattributes`: `*.csv filter=lfs`). After cloning, run `git lfs pull`; without it these files are small pointer files starting
 with `version https://git-lfs.github.com/spec/v1`. GitHub's "Download ZIP" and the v1.0.0 Zenodo snapshot made by the GitHub
-integration contain those pointers only. The **v1.1.0 Zenodo archive (10.5281/zenodo.22771013)** is self-contained: every pointer is
+integration contain those pointers only. The **v1.1.0 Zenodo archive (10.5281/zenodo.22771300)** is self-contained: every pointer is
 replaced by the resolved file (about 0.9 GB uncompressed) and a `MANIFEST.sha256` lists every file. Revision-2/3 result files are
 written as `.json`/`.md`/`.tsv`/`.tex` so that they are never LFS-filtered.
 

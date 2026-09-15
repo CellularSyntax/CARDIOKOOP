@@ -154,7 +154,7 @@ authors' GPU CI "17.5 ± 1.4" (revision-2 run), the CPU-f64 run gives 17.5 ± 1.
 ## 7. Release / archive
 
 * GitHub: tag `v1.1.0` (release "v1.1.0 — Array revision reproducibility package").
-* Zenodo software archive v1.1.0: DOI 10.5281/zenodo.22771013 (concept DOI 10.5281/zenodo.21993894). Unlike v1.0.0
+* Zenodo software archive v1.1.0: DOI 10.5281/zenodo.22771300 (concept DOI 10.5281/zenodo.21993894). Unlike v1.0.0
   (GitHub-integration snapshot with Git-LFS pointer files), the v1.1.0 archive contains the resolved content of all 523
   `*.csv` files (≈ 0.9 GB uncompressed) plus a `MANIFEST.sha256`.
 * Dataset record (splits only): DOI 10.5281/zenodo.21163127.
