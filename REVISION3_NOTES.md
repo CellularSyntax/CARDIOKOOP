@@ -161,3 +161,86 @@ authors' GPU CI "17.5 ± 1.4" (revision-2 run), the CPU-f64 run gives 17.5 ± 1.
 * Files changed in this release relative to v1.0.0: `README.md` (rewritten), `pyproject.toml` (version 1.1.0); new:
   `CITATION.cff`, `REVISION3_NOTES.md`, `environment/`, `scripts/revision3/`, `results/revision3/`. No existing file
   other than `README.md` and `pyproject.toml` was modified or removed.
+
+---
+
+## 8. Container verification (Docker image + GitHub Actions, v1.2.0)
+
+**What runs.** `Dockerfile` (python:3.11-slim, CPU wheel of torch 2.6.0, every pin of `environment/requirements-pinned.txt`,
+non-editable install of the package, the frozen checkpoints and the committed results) with `scripts/reproduce.sh` as default
+command. The workflow `.github/workflows/reproduce.yml` (push to `main`/`docker-ci`, pull requests, `v*` tags, manual) builds the
+image, runs the container with the repository mounted **read-only** (only `out/` writable), and:
+
+1. downloads `csv_data_500_12sigs_test1_{x,u}.csv` and `csv_data_500_12sigs_train1_x.csv` from the Zenodo dataset record
+   10.5281/zenodo.21163127 (record 21163128) because `data/*.csv` are Git-LFS pointers in a plain checkout, and verifies their MD5
+   against the record (`normalization_{mean,std}.npy` are plain files in the repository and are MD5-verified as well; the Zenodo
+   files are byte-identical to the LFS objects — SHA-256 of the downloads equals the LFS `oid`);
+2. runs `scripts/revision3/export_manuscript_tables.py --out-dir /workspace/out` (float64 Koopman rollout on CPU; all 50 test
+   trajectories, 1499 steps) — Koopman rollout ≈ 42 s, MLP re-roll check ≈ 15 s, AR(20) OLS + rollout ≈ 10 s on the 4-vCPU runner;
+3. runs `scripts/revision3/compare_results.py --committed results/revision3 --fresh /workspace/out`, uploads `out/` as the
+   workflow artifact `reproduction-tables`, and on `main` / `v*` pushes the verified image to `ghcr.io/cellularsyntax/cardiokoop`
+   (tags `sha-<short>`, `latest`, `v*`; digest in `out/image_digest.txt` and in the job summary).
+
+**Pass criteria** (`compare_results.py`, 1467 metrics): every number is compared *as printed in the manuscript* — Table 3 %RMSE and
+CI to 1 decimal, pooled R² and CI to 2 decimals, parameter counts / inference times / speed-ups exact; Table 4 RMSE, %RMSE, CIs,
+bias and LoA to 1 decimal, R² and CI to 2 decimals (8 models × 12 signals × 9 values); Table 5 %RMSE to 1 decimal, R² to 2
+decimals (clean row recomputed, noisy rows read from the committed JSONs); statistics: Friedman χ² to 2 decimals, Shapiro W to
+3 decimals, every p-value within a factor of 2, Wilcoxon W to the integer, trajectory counts (worse/better/ties, negative-R²
+counts) exact, summary statistics to 1 decimal; `r2_conventions.json` means/SDs/CIs/medians/min/max to 2 decimals, global pooled
+R² to 3 decimals. A change of exactly one unit in the last printed digit is tolerated (unless `REPRO_STRICT=1`) but is listed in
+`out/compare_report.md`; anything larger fails the job.
+
+**Finding: the float32 MLP rollout is not platform-independent at manuscript rounding.** The first container run
+(GitHub Actions run 35010585147, x86-64 `Linux-6.17-azure`, torch 2.6.0+cpu, numpy 2.2.6) reproduced **every** Koopman, LSTM, GRU,
+BiLSTM, AR(20), DLinear and NLinear number and every statistic identically at printed precision (Friedman χ² = 175.55, all
+Wilcoxon p-values, W = 20 and 47/50 for the MLP comparison) — 1330 of 1459 metrics — but all remaining 129 metrics
+(95 beyond rounding, 34 off-by-one) belong to the MLP baseline, whose autoregressive float32 rollout with clip ±20 diverges
+(%RMSE > 100 %) and therefore amplifies CPU-architecture floating-point differences (Apple Silicon/Accelerate vs. x86-64/MKL):
+
+| MLP metric (Table 3 / Table 5 clean) | committed (macOS arm64, torch 2.12.1) | x86-64 container re-roll |
+|---|---|---|
+| %RMSE mean ± 95 % CI | 132.2 ± 55.1 (132.24 / 55.15) | 132.8 ± 55.2 (132.75 / 55.24) |
+| pooled R² mean ± 95 % CI | −17.63 ± 10.45 | −17.73 ± 10.46 |
+| global pooled R² | −18.688 | −18.830 |
+| trajectories with pooled R² < 0 | 20 | 19 |
+| Wilcoxon Koopman vs. MLP | W = 20, p = 6.59e-13, 47/50 worse | identical |
+
+| Signal | MLP Table 4 cells that differ (committed → x86 container re-roll; ±1 = last-digit rounding only) |
+|---|---|
+| P_ra | pct_rmse 187.4→188.3; pct_rmse_ci95 82.0→82.3; r2 -253.98→-255.50; r2_ci95 145.64→145.81 |
+| V_ra | rmse 35.6→35.7 (±1); pct_rmse 79.8→80.0; r2 -22.28→-22.42; r2_ci95 11.90→11.91 (±1); bias -15.0→-15.1 (±1); loa_lower -60.3→-60.4 (±1); loa_upper 30.3→30.2 (±1) |
+| P_rv | rmse 51.0→51.3; pct_rmse 147.2→147.9; pct_rmse_ci95 64.8→64.9 (±1); r2 -48.62→-48.94; r2_ci95 28.27→28.31; bias -37.0→-37.3; loa_lower -92.9→-93.4 |
+| V_rv | rmse 134.0→134.5; rmse_ci95 55.9→56.1; pct_rmse 139.3→139.8; pct_rmse_ci95 60.7→60.8 (±1); r2 -82.01→-82.35; r2_ci95 48.34→48.36; bias 86.9→87.5; loa_lower -49.6→-49.3; loa_upper 223.5→224.4 |
+| P_vp | rmse 14.9→15.0 (±1); pct_rmse 356.2→357.6; pct_rmse_ci95 198.1→198.3; r2 -619.69→-621.49; r2_ci95 582.19→582.34; bias 9.2→9.3 (±1); loa_upper 23.9→24.0 (±1) |
+| P_la | rmse 9.0→9.1 (±1); rmse_ci95 3.0→3.1 (±1); pct_rmse 89.5→89.9; pct_rmse_ci95 35.3→35.4 (±1); r2 -30.93→-31.16; r2_ci95 25.88→25.92; loa_upper 15.1→15.2 (±1) |
+| V_la | rmse 66.5→66.8; rmse_ci95 28.7→28.8 (±1); pct_rmse 163.3→163.9; pct_rmse_ci95 74.2→74.4; r2 -151.23→-152.23; r2_ci95 92.96→93.10; bias 44.9→45.3; loa_lower -23.6→-23.4; loa_upper 113.4→113.9 |
+| P_lv | rmse 47.1→47.3; pct_rmse 40.0→40.1 (±1); pct_rmse_ci95 6.2→6.3 (±1); r2 -0.55→-0.56 (±1); bias -15.0→-15.2; loa_lower -96.4→-96.7; loa_upper 66.3→66.4 (±1) |
+| V_lv | rmse 140.9→141.5; rmse_ci95 56.6→56.8; pct_rmse 168.0→168.7; pct_rmse_ci95 71.0→71.1 (±1); r2 -93.36→-93.78; r2_ci95 56.21→56.23; bias 75.7→76.3; loa_lower -70.6→-70.4; loa_upper 221.9→223.1 |
+| Q_i_lv | rmse 548.2→550.3; rmse_ci95 233.2→234.0; pct_rmse 90.9→91.2; pct_rmse_ci95 37.7→37.8 (±1); r2 -50.17→-50.51; r2_ci95 28.81→28.87; bias -393.0→-395.7; loa_lower -1010.0→-1014.0; loa_upper 224.1→222.6 |
+| Q_o_lv | rmse 291.6→292.7; rmse_ci95 79.7→79.9; pct_rmse 63.2→63.4; r2 -6.35→-6.38; bias -152.4→-153.5; loa_lower -552.5→-554.7; loa_upper 247.7→247.6 (±1) |
+| P_ao | pct_rmse 62.0→62.1 (±1); r2 -9.07→-9.08 (±1); bias 4.2→4.3 (±1); loa_upper 47.9→48.0 (±1) |
+
+(`P_ao`: pct_rmse 62.0→62.1, r2 −9.07→−9.08, bias 4.2→4.3, loa_upper 47.9→48.0, all ±1. The full 129-row list is in the
+verification report of the docker-ci branch run.)
+
+**Resolution (v1.2.0).** The MLP *predictions* of the committed run are frozen in `results/mlp/mlp_postprocessing_results.pkl`
+(same keys and convention as the GRU/LSTM/BiLSTM/DLinear/NLinear pickles; generated with `build_tables_figures.mlp_pred` on the
+committed platform and **bit-identical** to the predictions behind `results/revision3/` — no committed table value changed).
+`export_manuscript_tables.py` loads them by default (`--recompute-mlp` re-rolls the checkpoint instead), so the Table 3/4/5 MLP
+rows are now reproduced exactly on every platform, and the MLP row has a committed file of origin like every other baseline. On
+every run the checkpoint is nevertheless re-rolled in float32 and float64 and compared with the frozen predictions
+(`mlp_recompute_check.json`); the float32 re-roll is gated at 2 % relative on mean %RMSE and pooled R² (observed on x86-64:
++0.39 % and −0.57 %), the float64 re-roll is informational. Notably the **float64** MLP re-roll is platform-independent
+(133.6309060 on arm64 vs. 133.6309062 on x86-64, pooled R² −17.6786 on both) but differs from the manuscript's float32 rollout by
++1.0 pp %RMSE; switching the MLP baseline to float64 would therefore be a clean alternative for a future revision at the cost of
+changing the MLP row.
+
+**Final verification run (docker-ci branch, commit 12a3ed9, run 35012431235):** 1467 metrics, **1463 identical at printed
+precision, 0 off-by-one, 0 violations**, 4 informational (float64 re-roll and bit-identity flags). Container wall time 98 s
+(data download 88 s, export 79 s on a cached second run), total job ≈ 7 min including the image build (≈ 4.5 min, GHA-cached).
+
+**Note for the manuscript.** The check verifies the repository against `results/revision3/`. The Table 3 / Table 5 clean MLP
+values in the current manuscript draft (132.7 ± 55.2, −17.73 ± 10.46) and the Koopman CI (17.5 ± 1.4) are the revision-2
+workstation (GPU, float32) values, not the committed revision-3 values (132.2 ± 55.1, −17.63 ± 10.45, 17.5 ± 1.5); 18 further
+Table 4 cells of the LSTM/GRU/BiLSTM rows differ from `table4_per_signal_full.json` in the last printed digit. These
+manuscript-side discrepancies are outside the scope of the container check and are to be aligned in the final submission files.
