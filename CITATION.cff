@@ -2,12 +2,12 @@ cff-version: 1.2.0
 message: "If you use CARDIOKOOP (code, checkpoints or data), please cite both the software and the Array article below."
 type: software
 title: "CARDIOKOOP: Control-aware Koopman operator models for real-time hemodynamic prediction"
-version: 1.1.0
+version: 1.2.0
 date-released: 2026-09-15
-doi: 10.5281/zenodo.22771300
+doi: 10.5281/zenodo.22776287
 license: MIT
 repository-code: "https://github.com/CellularSyntax/CARDIOKOOP"
-url: "https://github.com/CellularSyntax/CARDIOKOOP/tree/v1.1.0"
+url: "https://github.com/CellularSyntax/CARDIOKOOP/tree/v1.2.0"
 keywords:
   - Koopman operator
   - cardiovascular digital twin
@@ -35,10 +35,10 @@ authors:
     affiliation: "Medical University of Vienna; Ludwig Boltzmann Institute for Cardiovascular Research; Austrian Cluster for Tissue Regeneration"
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.22771300
-    description: "Zenodo software archive, v1.1.0 (resolved data files, checkpoints, results)"
+    value: 10.5281/zenodo.22776287
+    description: "Zenodo software archive, v1.2.0 (resolved data files, checkpoints, results, CI-verified container)"
   - type: doi
-    value: 10.5281/zenodo.21993894
+    value: 10.5281/zenodo.22776286
     description: "Zenodo concept DOI (all software versions)"
   - type: doi
     value: 10.5281/zenodo.21163127

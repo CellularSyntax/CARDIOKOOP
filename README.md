@@ -5,13 +5,13 @@
 # **CARDIOKOOP**
 *Control-aware Koopman deep learning framework for real-time hemodynamic forecasting and cardiovascular digital twin applications.*
 
-[![Software DOI](https://img.shields.io/badge/Zenodo%20software-10.5281%2Fzenodo.22771300-blue)](https://doi.org/10.5281/zenodo.22771300)
+[![Software DOI](https://img.shields.io/badge/Zenodo%20software-10.5281%2Fzenodo.22776287-blue)](https://doi.org/10.5281/zenodo.22776287)
 [![Dataset DOI](https://img.shields.io/badge/Zenodo%20dataset-10.5281%2Fzenodo.21163127-blue)](https://doi.org/10.5281/zenodo.21163127)
-[![Release](https://img.shields.io/badge/release-v1.1.0-green)](https://github.com/CellularSyntax/CARDIOKOOP/releases/tag/v1.1.0)
+[![Release](https://img.shields.io/badge/release-v1.2.0-green)](https://github.com/CellularSyntax/CARDIOKOOP/releases/tag/v1.2.0)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 [![PyTorch 2.6](https://img.shields.io/badge/PyTorch-2.6-ee4c2c)](environment/requirements-pinned.txt)
 [![Reproduce manuscript tables (Docker)](https://github.com/CellularSyntax/CARDIOKOOP/actions/workflows/reproduce.yml/badge.svg?branch=main)](https://github.com/CellularSyntax/CARDIOKOOP/actions/workflows/reproduce.yml)
-[![Container](https://img.shields.io/badge/ghcr.io-cellularsyntax%2Fcardiokoop-2496ed?logo=docker&logoColor=white)](https://github.com/CellularSyntax/CARDIOKOOP/pkgs/container/cardiokoop)
+[![Container](https://img.shields.io/badge/ghcr.io-cellularsyntax%2Fcardiokoop%3Av1.2.0-2496ed?logo=docker&logoColor=white)](https://github.com/CellularSyntax/CARDIOKOOP/pkgs/container/cardiokoop)
 
 CARDIOKOOP learns **Koopman eigenfunctions** from multivariate cardiovascular simulations of a validated lumped-parameter model and
 uses them as a **control-aware, real-time surrogate** for pressures, volumes and flows. The repository contains the package, the
@@ -30,12 +30,9 @@ If you use this code, data or pre-trained models, please cite the article **and*
 
 | Archive | DOI |
 |---|---|
-| Software, checkpoints, data and results — **v1.1.0** (this release; self-contained, all data files resolved) | [10.5281/zenodo.22771300](https://doi.org/10.5281/zenodo.22771300) |
-| Software — all versions (concept DOI) | [10.5281/zenodo.21993894](https://doi.org/10.5281/zenodo.21993894) |
+| Software, checkpoints, data and results — **v1.2.0** (this release; self-contained, all data files resolved, CI-verified container) | [10.5281/zenodo.22776287](https://doi.org/10.5281/zenodo.22776287) |
+| Software — all versions (concept DOI) | [10.5281/zenodo.22776286](https://doi.org/10.5281/zenodo.22776286) |
 | Dataset — seed-42 train/validation/test splits | [10.5281/zenodo.21163127](https://doi.org/10.5281/zenodo.21163127) |
-
-> **Note on Zenodo versions.** Record 10.5281/zenodo.22771013 is a GitHub-integration snapshot of tag v1.1.0 that contains Git-LFS pointer files only; the self-contained v1.1.0 archive with all data files resolved is 10.5281/zenodo.22771300. The concept DOI 10.5281/zenodo.21993894 always resolves to the latest version.
-
 
 ---
 
@@ -125,9 +122,9 @@ beyond the last printed digit.
 # build and run locally (≈ 5 min build, a few minutes run on a laptop CPU)
 docker build -t cardiokoop .
 docker run --rm -v "$PWD/out:/workspace/out" cardiokoop
-# or use the CI-verified image
-docker pull ghcr.io/cellularsyntax/cardiokoop:latest
-docker run --rm -v "$PWD/out:/workspace/out" ghcr.io/cellularsyntax/cardiokoop:latest
+# or use the CI-verified image of this release (tag v1.2.0; `:latest` follows main)
+docker pull ghcr.io/cellularsyntax/cardiokoop:v1.2.0
+docker run --rm -v "$PWD/out:/workspace/out" ghcr.io/cellularsyntax/cardiokoop:v1.2.0
 ```
 
 `out/` then contains the regenerated `table3_overall.*`, `table4_per_signal_full.*`, `table5_noise.*`, `statistics.json`,
@@ -243,9 +240,8 @@ predictions are frozen in `results/mlp/mlp_postprocessing_results.pkl` (bit-iden
 
 All 523 `*.csv` files (`data/` splits 251 MB, `raw_data/csv_sims/` 662 MB, `results/**/*.csv`) are stored with **Git LFS**
 (`.gitattributes`: `*.csv filter=lfs`). After cloning, run `git lfs pull`; without it these files are small pointer files starting
-with `version https://git-lfs.github.com/spec/v1`. GitHub's "Download ZIP" and the v1.0.0 Zenodo snapshot made by the GitHub
-integration contain those pointers only. The **v1.1.0 Zenodo archive (10.5281/zenodo.22771300)** is self-contained: every pointer is
-replaced by the resolved file (about 0.9 GB uncompressed) and a `MANIFEST.sha256` lists every file. Revision-2/3 result files are
+with `version https://git-lfs.github.com/spec/v1`. GitHub's "Download ZIP" contains those pointers only. The **v1.2.0 Zenodo archive (10.5281/zenodo.22776287)** is self-contained: every pointer is
+replaced by the resolved file (about 1.2 GB uncompressed) and a `MANIFEST.sha256` lists every file. Revision-2/3 result files are
 written as `.json`/`.md`/`.tsv`/`.tex` so that they are never LFS-filtered.
 
 ## Training and post-processing from scratch (CLI)

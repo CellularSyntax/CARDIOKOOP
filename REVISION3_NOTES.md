@@ -1,4 +1,4 @@
-# CARDIOKOOP — Revision 3 notes (journal *Array*, minor revision; release v1.1.0)
+# CARDIOKOOP — Revision 3 notes (journal *Array*, minor revision; release v1.2.0)
 
 Purpose of this document: give every number, table and figure in the manuscript
 "Real-Time Hemodynamic Prediction via Control-Aware Koopman Operator Models" a committed
@@ -153,12 +153,14 @@ authors' GPU CI "17.5 ± 1.4" (revision-2 run), the CPU-f64 run gives 17.5 ± 1.
 
 ## 7. Release / archive
 
-* GitHub: tag `v1.1.0` (release "v1.1.0 — Array revision reproducibility package").
-* Zenodo software archive v1.1.0: DOI 10.5281/zenodo.22771300 (concept DOI 10.5281/zenodo.21993894). Unlike v1.0.0
-  (GitHub-integration snapshot with Git-LFS pointer files), the v1.1.0 archive contains the resolved content of all 523
-  `*.csv` files (≈ 0.9 GB uncompressed) plus a `MANIFEST.sha256`.
+* GitHub: tag `v1.2.0` (release "v1.2.0 — CI-verified reproducibility package (Array revision)"); the previous tag `v1.1.0`
+  (release "v1.1.0 — Array revision reproducibility package") remains for history.
+* Zenodo software archive v1.2.0: DOI 10.5281/zenodo.22776287 (concept DOI 10.5281/zenodo.22776286). The archive contains the resolved
+  content of all 523 `*.csv` files (≈ 1.2 GB uncompressed) plus a `MANIFEST.sha256`; it is self-contained. It supersedes the
+  earlier software records (10.5281/zenodo.21993895, 22771013, 22771300), which have been withdrawn.
+* Container image: `ghcr.io/cellularsyntax/cardiokoop:v1.2.0` (see section 8 and 9).
 * Dataset record (splits only): DOI 10.5281/zenodo.21163127.
-* Files changed in this release relative to v1.0.0: `README.md` (rewritten), `pyproject.toml` (version 1.1.0); new:
+* Files changed in v1.1.0 relative to v1.0.0: `README.md` (rewritten), `pyproject.toml` (version 1.1.0); new:
   `CITATION.cff`, `REVISION3_NOTES.md`, `environment/`, `scripts/revision3/`, `results/revision3/`. No existing file
   other than `README.md` and `pyproject.toml` was modified or removed.
 
@@ -244,3 +246,18 @@ values in the current manuscript draft (132.7 ± 55.2, −17.73 ± 10.46) and th
 workstation (GPU, float32) values, not the committed revision-3 values (132.2 ± 55.1, −17.63 ± 10.45, 17.5 ± 1.5); 18 further
 Table 4 cells of the LSTM/GRU/BiLSTM rows differ from `table4_per_signal_full.json` in the last printed digit. These
 manuscript-side discrepancies are outside the scope of the container check and are to be aligned in the final submission files.
+
+---
+
+## 9. Release v1.2.0
+
+* The revision-4 (R4) manuscript tables equal `results/revision3/` **exactly** at printed precision: the 24 cells listed at the
+  end of section 8 (Table 3 / Table 5 clean MLP and Koopman CI values, 18 LSTM/GRU/BiLSTM Table 4 cells, Table 5 R² MLP) were
+  aligned on the manuscript side to the committed revision-3 files. The repository results did not change; no table, JSON or
+  pickle in `results/` was modified between v1.1.0 and v1.2.0 other than the addition of `results/mlp/mlp_postprocessing_results.pkl`
+  and `results/revision3/mlp_recompute_check.json` (section 8).
+* v1.2.0 adds the `Dockerfile`, `.github/workflows/reproduce.yml`, `scripts/reproduce.sh`, `scripts/revision3/compare_results.py`,
+  the `--out-dir`/`--recompute-mlp` options of `export_manuscript_tables.py`, the frozen MLP predictions, and the fresh Zenodo record
+  10.5281/zenodo.22776287; `README.md`, `CITATION.cff`, this file and `pyproject.toml` (version 1.2.0) were updated accordingly.
+* The image `ghcr.io/cellularsyntax/cardiokoop:v1.2.0` is built by the tag-triggered run of `reproduce.yml`; its digest is
+  recorded in the GitHub release notes and in the Zenodo record description.
