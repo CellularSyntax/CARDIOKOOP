@@ -39,7 +39,8 @@ Usage
 
 ``--tolerance-json`` maps fnmatch patterns on the metric path (e.g.
 ``"table4/*/r2_ci95"``) to a rule: ``{"decimals": 2}``, ``{"factor": 2}``,
-``{"abs": 0.05}`` or ``{"exact": true}``; the last matching pattern wins.
+``{"abs": 0.05}``, ``{"rel": 0.02}`` (relative), ``{"info": true}`` (report only) or
+``{"exact": true}``; the last matching pattern wins.
 """
 import os
 import sys
@@ -50,6 +51,7 @@ import argparse
 
 FILES = ["table3_overall.json", "table4_per_signal_full.json", "table5_noise.json",
          "statistics.json", "r2_conventions.json"]
+OPTIONAL_FILES = ["mlp_recompute_check.json"]      # compared only if present on both sides
 
 ONE = {"decimals": 1}
 TWO = {"decimals": 2}
@@ -57,6 +59,8 @@ THREE = {"decimals": 3}
 EXACT = {"exact": True}
 PFACT = {"factor": 2.0}
 INT1 = {"decimals": 0}
+REL2 = {"rel": 0.02}          # 2 % relative tolerance (platform-sensitive MLP re-roll)
+INFO = {"info": True}         # reported, never gating
 
 
 # ───────────────────────── metric extraction ─────────────────────────
@@ -147,9 +151,22 @@ def metrics_r2conv(d):
     return out
 
 
+def metrics_mlp_check(d):
+    """Fresh MLP rollout on the current machine vs. the frozen predictions: gated at 2 % relative
+    (float32, the manuscript precision); the float64 re-roll is informational only."""
+    out = {}
+    for key in ["pct_rmse_mean", "r2_pooled_mean"]:
+        out[f"mlp_recompute/frozen/{key}"] = (d["frozen"][key], TWO)
+        out[f"mlp_recompute/float32/{key}"] = (d["recomputed_float32"][key], REL2)
+        out[f"mlp_recompute/float64/{key}"] = (d["recomputed_float64"][key], INFO)
+    out["mlp_recompute/float32/bit_identical_to_frozen"] = (int(d["recomputed_float32"]["bit_identical"]), INFO)
+    out["mlp_recompute/float32/max_abs_pred_diff"] = (d["recomputed_float32"]["max_abs_pred_diff"], INFO)
+    return out
+
+
 EXTRACTORS = {"table3_overall.json": metrics_table3, "table4_per_signal_full.json": metrics_table4,
               "table5_noise.json": metrics_table5, "statistics.json": metrics_statistics,
-              "r2_conventions.json": metrics_r2conv}
+              "r2_conventions.json": metrics_r2conv, "mlp_recompute_check.json": metrics_mlp_check}
 
 
 # ───────────────────────── comparison ─────────────────────────
@@ -160,6 +177,8 @@ def fmt(x, rule):
         return f"{x:.{rule['decimals']}f}"
     if "factor" in rule:
         return f"{x:.3g}"
+    if "rel" in rule or "info" in rule:
+        return f"{x:.6g}" if isinstance(x, float) else str(x)
     return repr(x) if isinstance(x, float) else str(x)
 
 
@@ -173,6 +192,14 @@ def compare(c, r, rule):
         return ("ok", "") if c == r else ("violation", f"exact mismatch (diff {r - c:+.6g})")
     if "abs" in rule:
         return ("ok", "") if abs(r - c) <= rule["abs"] else ("violation", f"|diff| {abs(r - c):.6g} > {rule['abs']}")
+    if rule.get("info"):
+        return "info", (f"diff {r - c:+.6g}" if c != r else "")
+    if "rel" in rule:
+        if c == r:
+            return "ok", ""
+        rel = abs(r - c) / max(abs(c), 1e-12)
+        return ("ok", f"rel diff {100 * rel:.3f} % (<= {100 * rule['rel']:g} %)") if rel <= rule["rel"] \
+            else ("violation", f"rel diff {100 * rel:.3f} % > {100 * rule['rel']:g} %")
     if "factor" in rule:
         f = rule["factor"]
         if c == r:
@@ -192,9 +219,9 @@ def compare(c, r, rule):
     return "violation", f"printed {sc} -> {sr} ({dprint / unit:.0f} units of last digit; raw diff {r - c:+.3e})"
 
 
-def load_metrics(directory):
+def load_metrics(directory, optional_present):
     all_m = {}
-    for fn in FILES:
+    for fn in FILES + [f for f in OPTIONAL_FILES if f in optional_present]:
         p = os.path.join(directory, fn)
         if not os.path.exists(p):
             print(f"ERROR: {p} not found", file=sys.stderr)
@@ -231,10 +258,12 @@ def main():
     if args.tolerance_json:
         with open(args.tolerance_json) as f:
             tol = json.load(f)
-    cm = apply_tolerances(load_metrics(args.committed), tol)
-    rm = apply_tolerances(load_metrics(args.fresh), tol)
+    optional = [f for f in OPTIONAL_FILES
+                if os.path.exists(os.path.join(args.committed, f)) and os.path.exists(os.path.join(args.fresh, f))]
+    cm = apply_tolerances(load_metrics(args.committed, optional), tol)
+    rm = apply_tolerances(load_metrics(args.fresh, optional), tol)
 
-    rows, counts = [], {"ok": 0, "off_by_one": 0, "violation": 0, "missing": 0}
+    rows, counts = [], {"ok": 0, "off_by_one": 0, "violation": 0, "missing": 0, "info": 0}
     for k in list(cm) + [k for k in rm if k not in cm]:
         c, rule = cm.get(k, (None, {}))
         r, rule_r = rm.get(k, (None, {}))
@@ -245,25 +274,26 @@ def main():
 
     hdr = ("metric", "committed", "reproduced", "status", "detail")
     width = max(len(r[0]) for r in rows)
-    shown = [r for r in rows if args.all or r[3] != "ok"]
+    shown = [r for r in rows if args.all or r[3] not in ("ok",) or r[3] == "info"]
     print(f"{hdr[0]:<{width}}  {hdr[1]:>12}  {hdr[2]:>12}  {hdr[3]:<11} {hdr[4]}")
     for k, c, r, s, d in shown:
         print(f"{k:<{width}}  {c:>12}  {r:>12}  {s:<11} {d}")
     if not shown:
         print("(all metrics identical at manuscript rounding)")
     n = len(rows)
-    print(f"\n{n} metrics compared: {counts['ok']} identical at printed precision, "
+    print(f"\n{n} metrics compared: {counts['ok']} identical at printed precision / within tolerance, "
           f"{counts['off_by_one']} off-by-one in the last printed digit, "
-          f"{counts['violation']} violations, {counts['missing']} missing")
+          f"{counts['violation']} violations, {counts['missing']} missing, {counts['info']} informational")
 
     if args.report:
         with open(args.report, "w") as f:
             f.write("# Reproduction check — committed `results/revision3` vs. fresh run\n\n")
             f.write(f"* committed: `{os.path.abspath(args.committed)}`\n* reproduced: `{os.path.abspath(args.fresh)}`\n")
-            f.write(f"* {n} metrics compared: **{counts['ok']} identical** at printed precision, "
+            f.write(f"* {n} metrics compared: **{counts['ok']} identical** at printed precision (or within tolerance), "
                     f"**{counts['off_by_one']} off-by-one** in the last printed digit, "
-                    f"**{counts['violation']} violations**, {counts['missing']} missing\n\n")
-            for title, sel in [("Violations", ["violation", "missing"]), ("Off-by-one rounding differences", ["off_by_one"])]:
+                    f"**{counts['violation']} violations**, {counts['missing']} missing, {counts['info']} informational\n\n")
+            for title, sel in [("Violations", ["violation", "missing"]), ("Off-by-one rounding differences", ["off_by_one"]),
+                               ("Informational (not gating)", ["info"])]:
                 sub = [r for r in rows if r[3] in sel]
                 f.write(f"## {title} ({len(sub)})\n\n")
                 if sub:

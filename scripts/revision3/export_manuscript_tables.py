@@ -18,7 +18,11 @@ Why this script exists
   they are regenerated here with the revision-2 functions
   (``scripts/revision2/build_tables_figures.py``: ``mlp_pred`` with the committed
   ``checkpoints/mlp_baseline.pt`` and clip 20, ``ar_pred`` = OLS AR(20) fitted on
-  train1).
+  train1).  Since v1.2.0 the MLP test1 predictions of the committed run are frozen
+  in ``results/mlp/mlp_postprocessing_results.pkl`` and loaded by default (the
+  diverging float32 MLP rollout is not platform-independent at manuscript rounding);
+  ``--recompute-mlp`` re-rolls the checkpoint instead, and every run writes
+  ``mlp_recompute_check.json`` quantifying the deviation of a fresh rollout.
 * The statistics (Shapiro–Wilk, Friedman over the six dynamical models,
   paired two-sided Wilcoxon Koopman vs. each baseline, Bonferroni x5) are
   recomputed on the per-trajectory %RMSE of exactly these predictions.
@@ -118,6 +122,61 @@ def per_traj_pooled_r2(true, pred):
     return np.array([C.r2_flat(true[i], pred[i]) for i in range(true.shape[0])])
 
 
+MLP_FROZEN = os.path.join(C.RESULT_DIR, "mlp", "mlp_postprocessing_results.pkl")
+
+
+def mlp_rollout_dtype(Xn, sig_mean, sig_std, dtype):
+    """Autoregressive MLP rollout identical to build_tables_figures.mlp_pred (clip ±20), but in the
+    requested precision.  Used only for the platform-sensitivity check, never for the tables."""
+    import torch.nn as nn
+    ck = torch.load(os.path.join(C.CKPT_DIR, "mlp_baseline.pt"), map_location="cpu", weights_only=False)
+    D = Xn.shape[2]
+    m = nn.Sequential(nn.Linear(D, 256), nn.ReLU(), nn.Linear(256, 512), nn.ReLU(),
+                      nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, D))
+    m.load_state_dict({k.replace("net.", "", 1): v for k, v in ck["state_dict"].items()})
+    m = m.to(dtype).eval()
+    B, T, _ = Xn.shape
+    out = np.empty_like(Xn)
+    with torch.no_grad():
+        for i in range(B):
+            out[i, 0] = Xn[i, 0]
+            prev = torch.tensor(Xn[i, 0], dtype=dtype).unsqueeze(0)
+            for t in range(1, T):
+                prev = m(prev).clamp(-20.0, 20.0)
+                out[i, t] = prev.numpy()[0]
+    return out * sig_std + sig_mean
+
+
+def mlp_recompute_check(Xn, Xte, sig_mean, sig_std, pred_frozen, frozen_meta):
+    """Re-roll the MLP checkpoint on this machine (float32 as in the manuscript, and float64) and
+    quantify the deviation from the frozen predictions.  Written to mlp_recompute_check.json."""
+    def summary(pred):
+        pct = C.compute_results_dict(Xte, pred, np.zeros((Xte.shape[0], Xte.shape[1], 1)), np.zeros(Xte.shape[0]), 0)["pct_per_traj_ps"]
+        pooled = per_traj_pooled_r2(Xte, pred)
+        return dict(pct_rmse_mean=float(pct.mean()), pct_rmse_ci95=C.ci95(pct),
+                    r2_pooled_mean=float(pooled.mean()), r2_pooled_ci95=C.ci95(pooled))
+    frozen = summary(pred_frozen)
+    out = dict(frozen=dict(source=os.path.relpath(MLP_FROZEN, C.REPO_ROOT),
+                           platform=frozen_meta.get("platform"), torch=frozen_meta.get("torch"),
+                           rollout_dtype=frozen_meta.get("rollout_dtype", "float32"), **frozen))
+    for name, dtype in [("recomputed_float32", torch.float32), ("recomputed_float64", torch.float64)]:
+        t0 = time.time()
+        pred = mlp_rollout_dtype(Xn, sig_mean, sig_std, dtype)
+        s = summary(pred)
+        s.update(max_abs_pred_diff=float(np.abs(pred - pred_frozen).max()),
+                 pct_rmse_rel_diff_pct=float(100 * (s["pct_rmse_mean"] - frozen["pct_rmse_mean"]) / frozen["pct_rmse_mean"]),
+                 r2_pooled_rel_diff_pct=float(100 * (s["r2_pooled_mean"] - frozen["r2_pooled_mean"]) / abs(frozen["r2_pooled_mean"])),
+                 bit_identical=bool(np.array_equal(pred, pred_frozen)), wallclock_s=time.time() - t0)
+        out[name] = s
+    out["platform"] = dict(torch=torch.__version__, numpy=np.__version__, python=platform.python_version(),
+                           platform=platform.platform(), cpu=platform.processor() or platform.machine())
+    out["note"] = ("The MLP baseline diverges (clip ±20, %RMSE > 100 %), so its 1499-step float32 rollout amplifies "
+                   "CPU-architecture floating-point differences beyond manuscript rounding. The manuscript numbers "
+                   "come from the frozen predictions; this file documents the deviation of a fresh rollout on the "
+                   "current machine (gated at 2 % relative by scripts/revision3/compare_results.py).")
+    return out
+
+
 def md_table(header, rows):
     out = ["| " + " | ".join(header) + " |", "|" + "|".join(["---"] * len(header)) + "|"]
     out += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
@@ -150,6 +209,9 @@ def main():
     ap.add_argument("--out-dir", default=None,
                     help="write all outputs to this directory instead of results/revision3 "
                          "(used by scripts/reproduce.sh / the Docker CI check)")
+    ap.add_argument("--recompute-mlp", action="store_true",
+                    help="re-roll the MLP baseline (float32) instead of loading the frozen test1 predictions "
+                         "results/mlp/mlp_postprocessing_results.pkl (platform-sensitive; see REVISION3_NOTES.md)")
     args = ap.parse_args()
     if args.out_dir:
         global REV3_DIR
@@ -201,8 +263,27 @@ def main():
         assert np.allclose(np.asarray(r["true_per_trajectory"]), Xte, atol=1e-6), f"{m} pickle is not test1"
         preds[m] = np.asarray(r["pred_per_trajectory"], dtype=np.float64)
         nparams[m] = int(r["n_params"])
+    # MLP: the float32 rollout of this (diverging, clip-20) baseline amplifies CPU-architecture
+    # floating-point differences beyond manuscript rounding (x86-64 vs. Apple Silicon: %RMSE
+    # 132.8 vs. 132.2), so the test1 predictions of the committed run are frozen in
+    # results/mlp/mlp_postprocessing_results.pkl (same convention as the RNN / linear baselines)
+    # and loaded by default; --recompute-mlp re-rolls the checkpoint instead.  When the frozen
+    # predictions are used, the rollout is re-run anyway and compared with them in
+    # mlp_recompute_check.json (see REVISION3_NOTES.md, "Container verification").
+    mlp_check = None
     t0 = time.time()
-    preds["MLP"], nparams["MLP"], _ = BT.mlp_pred(Xn, sig_mean, sig_std)
+    if args.recompute_mlp or not os.path.exists(MLP_FROZEN):
+        if not args.recompute_mlp:
+            print(f"WARNING: {os.path.relpath(MLP_FROZEN, C.REPO_ROOT)} not found -> re-rolling the MLP baseline")
+        preds["MLP"], nparams["MLP"], _ = BT.mlp_pred(Xn, sig_mean, sig_std)
+        mlp_source = "recomputed (float32 rollout of checkpoints/mlp_baseline.pt)"
+    else:
+        r = C.load_pickle(MLP_FROZEN)
+        assert np.allclose(np.asarray(r["true_per_trajectory"]), Xte, atol=1e-6), "MLP pickle is not test1"
+        preds["MLP"] = np.asarray(r["pred_per_trajectory"], dtype=np.float64)
+        nparams["MLP"] = int(r["n_params"])
+        mlp_source = os.path.relpath(MLP_FROZEN, C.REPO_ROOT)
+        mlp_check = mlp_recompute_check(Xn, Xte, sig_mean, sig_std, preds["MLP"], r)
     t_mlp = time.time() - t0
     t0 = time.time()
     preds["AR(20)"], nparams["AR(20)"], _ = BT.ar_pred(Xn, sig_mean, sig_std)
@@ -361,11 +442,19 @@ def main():
                 python=platform.python_version(), platform=platform.platform(),
                 cpu=platform.processor() or platform.machine(),
                 gpu=(torch.cuda.get_device_name(0) if torch.cuda.is_available() else None),
+                mlp_predictions=mlp_source,
                 wallclock_s=dict(koopman_rollout=t_koop, mlp_rollout=t_mlp, ar_fit_and_rollout=t_ar,
                                  total=time.time() - t_start),
                 koopman_pct_rmse_mean=float(pct["Koopman"].mean()), koopman_r2_pooled_mean=float(pooled["Koopman"].mean()))
     with open(os.path.join(REV3_DIR, "run_info.json"), "w") as f:
         json.dump(info, f, indent=2)
+    if mlp_check is not None:
+        with open(os.path.join(REV3_DIR, "mlp_recompute_check.json"), "w") as f:
+            json.dump(mlp_check, f, indent=2)
+        r32 = mlp_check["recomputed_float32"]
+        print(f"MLP re-roll on this machine vs frozen predictions: %RMSE {r32['pct_rmse_mean']:.2f} vs "
+              f"{mlp_check['frozen']['pct_rmse_mean']:.2f} ({r32['pct_rmse_rel_diff_pct']:+.2f} %), "
+              f"bit-identical = {r32['bit_identical']}")
     print(f"\nAll outputs written to {REV3_DIR}  (total {info['wallclock_s']['total']:.0f} s)")
 
 
