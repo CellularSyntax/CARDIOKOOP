@@ -10,6 +10,8 @@
 [![Release](https://img.shields.io/badge/release-v1.1.0-green)](https://github.com/CellularSyntax/CARDIOKOOP/releases/tag/v1.1.0)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 [![PyTorch 2.6](https://img.shields.io/badge/PyTorch-2.6-ee4c2c)](environment/requirements-pinned.txt)
+[![Reproduce manuscript tables (Docker)](https://github.com/CellularSyntax/CARDIOKOOP/actions/workflows/reproduce.yml/badge.svg?branch=main)](https://github.com/CellularSyntax/CARDIOKOOP/actions/workflows/reproduce.yml)
+[![Container](https://img.shields.io/badge/ghcr.io-cellularsyntax%2Fcardiokoop-2496ed?logo=docker&logoColor=white)](https://github.com/CellularSyntax/CARDIOKOOP/pkgs/container/cardiokoop)
 
 CARDIOKOOP learns **Koopman eigenfunctions** from multivariate cardiovascular simulations of a validated lumped-parameter model and
 uses them as a **control-aware, real-time surrogate** for pressures, volumes and flows. The repository contains the package, the
@@ -41,6 +43,7 @@ If you use this code, data or pre-trained models, please cite the article **and*
 
 - [Repository layout](#repository-layout)
 - [Installation and environment](#installation-and-environment)
+- [Reproduce with Docker](#reproduce-with-docker)
 - [Frozen checkpoints](#frozen-checkpoints)
 - [Reproducing the manuscript tables and figures](#reproducing-the-manuscript-tables-and-figures)
 - [Numerical reproducibility](#numerical-reproducibility)
@@ -66,6 +69,7 @@ CARDIOKOOP/
 │   ├── koopman/               FROZEN Koopman checkpoint + val1 post-processing pickle (revision 1)
 │   ├── lstm/ gru/ bilstm/     RNN baseline checkpoints + test1 post-processing pickles
 │   ├── dlinear/ nlinear/      direct linear baselines, test1 post-processing pickles
+│   ├── mlp/                   frozen MLP baseline test1 predictions (v1.2.0; see REVISION3_NOTES.md section 8)
 │   ├── *.json                 revision-1 result files (noise robustness, AR/MLP baselines, ablations, ...)
 │   ├── revision2/             revision-2 tables (CSV/TeX) and JSONs   (scripts/revision2/)
 │   ├── revision3/             revision-3 manuscript tables 3-5, statistics, R2 conventions, test1 Koopman pickle
@@ -73,9 +77,12 @@ CARDIOKOOP/
 │   └── optuna_runs/           Optuna search history (301 trials)
 ├── scripts/                   revision-1 experiments (task1_*.py ... task9_*.py, export_tables.py, ...)
 │   ├── revision2/             revision-2 experiments + table/figure builders (`run_all.py`)
-│   └── revision3/             `export_manuscript_tables.py` (single-run export of Tables 3-5 + statistics)
+│   ├── revision3/             `export_manuscript_tables.py` (single-run export of Tables 3-5 + statistics),
+│   │                          `compare_results.py` (committed-vs-fresh check at manuscript rounding)
+│   └── reproduce.sh           Docker/CI entry point: fetch splits from Zenodo -> export -> compare
 ├── notebooks/                 figure/table notebooks (see "Reproducing ..." for which one is current)
 ├── environment/               requirements-pinned.txt, README.md (hardware, CUDA, Python)
+├── Dockerfile  .github/workflows/reproduce.yml   container + CI reproduction check (see "Reproduce with Docker")
 ├── CITATION.cff  REVISION2_RESULTS.md  REVISION3_NOTES.md  LICENSE (MIT)  pyproject.toml
 ```
 
@@ -100,6 +107,45 @@ cardiokoop --help
 `environment/requirements-pinned.txt` pins every dependency of `pyproject.toml` to a concrete release compatible with PyTorch 2.6.
 A CPU-only installation is sufficient to regenerate all tables (about one minute, see below); a GPU is only needed to retrain models
 or to rerun the Optuna search.
+
+## Reproduce with Docker
+
+The repository ships a `Dockerfile` (`python:3.11-slim`, CPU build of torch 2.6.0, every pin of
+`environment/requirements-pinned.txt`, the package, the frozen checkpoints and the committed results). Its default command,
+[`scripts/reproduce.sh`](scripts/reproduce.sh), (a) downloads the seed-42 `test1`/`train1` splits and the normalisation
+statistics from the Zenodo dataset record [10.5281/zenodo.21163127](https://doi.org/10.5281/zenodo.21163127) when `data/*.csv`
+are Git-LFS pointer files (MD5-verified against the record; `git lfs pull` is used as fallback), (b) runs
+`scripts/revision3/export_manuscript_tables.py --out-dir /workspace/out` and (c) runs
+`scripts/revision3/compare_results.py`, which compares every number of Tables 3, 4, 5, `statistics.json` and
+`r2_conventions.json` with the committed `results/revision3/` **at manuscript rounding** (%RMSE/RMSE/CIs to 1 decimal, R² to 2
+decimals, Friedman χ² to 2 decimals, p-values within a factor of 2, trajectory counts exact) and exits non-zero on any difference
+beyond the last printed digit.
+
+```bash
+# build and run locally (≈ 5 min build, a few minutes run on a laptop CPU)
+docker build -t cardiokoop .
+docker run --rm -v "$PWD/out:/workspace/out" cardiokoop
+# or use the CI-verified image
+docker pull ghcr.io/cellularsyntax/cardiokoop:latest
+docker run --rm -v "$PWD/out:/workspace/out" ghcr.io/cellularsyntax/cardiokoop:latest
+```
+
+`out/` then contains the regenerated `table3_overall.*`, `table4_per_signal_full.*`, `table5_noise.*`, `statistics.json`,
+`r2_conventions.json`, `koopman_test1_postprocessing_results.pkl`, `run_info.json` and `compare_report.md` (the full
+committed-vs-reproduced diff table). Useful options: `-e REPRO_THREADS=4` (torch CPU threads), `-e REPRO_DTYPE=float32`,
+`-e REPRO_STRICT=1` (also fail on a ±1 change in the last printed digit), `-e CARDIOKOOP_DATA_DIR=/data -v <local splits>:/data`
+(reuse already downloaded splits).
+
+**What the CI check proves.** The GitHub Actions workflow [`reproduce.yml`](.github/workflows/reproduce.yml) (badge above) builds
+this image from the current commit, runs the container with the repository mounted read-only, uploads `out/` as the workflow
+artifact `reproduction-tables`, and — only if the comparison passes — pushes the image to
+`ghcr.io/cellularsyntax/cardiokoop` (tags `sha-<short>`, `latest` on `main`, and the git tag on `v*` releases; the image digest
+is written to `out/image_digest.txt` and to the job summary). A green run therefore certifies that the frozen checkpoints, the
+committed baseline predictions, the Zenodo splits and the code in the repository regenerate every number of the manuscript's
+Tables 3–5 and statistics paragraph, at the precision at which they are printed, in a pinned environment on an independent
+x86-64 machine. Off-by-one differences in the last printed digit that arise from the 1499-step float rollout on a different CPU
+are tolerated by the check but listed explicitly in `compare_report.md` and in [`REVISION3_NOTES.md`](REVISION3_NOTES.md),
+section "Container verification".
 
 ## Frozen checkpoints
 
@@ -136,7 +182,9 @@ Writes `results/revision3/`: `table3_overall.{md,json,tsv}`, `table4_per_signal_
 RMSE, %RMSE, R2 with 95 % CI, Bland-Altman bias and limits of agreement), `table5_noise.{md,json,tsv}`, `statistics.json`
 (Shapiro-Wilk, Friedman over the six dynamical models, paired two-sided Wilcoxon Koopman vs. each baseline with Bonferroni x5),
 `r2_conventions.json` (pooled / per-signal / signal-averaged R2 and negative-R2 counts per model),
-`koopman_test1_postprocessing_results.pkl` (the Koopman **test1** evaluation, same keys as the baseline pickles) and `run_info.json`.
+`koopman_test1_postprocessing_results.pkl` (the Koopman **test1** evaluation, same keys as the baseline pickles), `run_info.json`
+and `mlp_recompute_check.json`. Add `--out-dir <dir>` to write elsewhere (used by the Docker check) and `--recompute-mlp` to re-roll
+the MLP baseline instead of loading the frozen `results/mlp/mlp_postprocessing_results.pkl`.
 
 ### Revision 2 — DLinear/NLinear, noise, gamma sweep, activation, mode ablation, Figures 5, S4, S6-S10
 
@@ -185,6 +233,11 @@ every case, the per-signal Koopman values of Table 4 agree to <= 0.1 pp, and eve
 (Wilcoxon W = 0 for GRU/LSTM/BiLSTM/AR(20) on all platforms). The committed `results/revision3/` files were generated on CPU in
 float64 (`run_info.json` records the platform); the RNN, DLinear and NLinear predictions are read from the committed pickles and are
 therefore bit-identical everywhere. Use `--dtype float64` (default) for the most platform-independent result.
+The autoregressive **MLP baseline** is the exception: its float32 rollout (clip ±20) diverges and amplifies CPU-architecture
+differences beyond manuscript rounding (x86-64: %RMSE 132.8 vs. 132.2 on the committed platform), so since v1.2.0 its test1
+predictions are frozen in `results/mlp/mlp_postprocessing_results.pkl` (bit-identical to the committed run) and loaded by
+`export_manuscript_tables.py` by default; `--recompute-mlp` re-rolls the checkpoint, and every run writes
+`mlp_recompute_check.json` with the deviation of a fresh float32/float64 rollout (see `REVISION3_NOTES.md`, section 8).
 
 ## Git-LFS data files and the Zenodo archive
 

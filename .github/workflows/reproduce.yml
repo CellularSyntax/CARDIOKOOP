@@ -1,0 +1,152 @@
+name: Reproduce manuscript tables (Docker)
+
+# Builds the reproduction image, regenerates Tables 3/4/5 + statistics from the frozen
+# checkpoints on the seed-42 test split inside the container, and fails if any number differs
+# from the committed results/revision3 at manuscript rounding (scripts/revision3/compare_results.py).
+# On pushes to main and on v* tags the verified image is pushed to ghcr.io/cellularsyntax/cardiokoop.
+
+on:
+  push:
+    branches: [main, docker-ci]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/cellularsyntax/cardiokoop
+
+jobs:
+  reproduce:
+    name: build image, reproduce tables, compare
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout (no LFS — the container fetches the splits from Zenodo)
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Image metadata (sha-<short>; latest on main; v* on tags)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+          labels: |
+            org.opencontainers.image.title=CARDIOKOOP
+            org.opencontainers.image.licenses=MIT
+
+      - name: Build image (load into the local Docker daemon)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: cardiokoop:ci
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Restore cached seed-42 splits (Zenodo record 21163128)
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/cardiokoop-data
+          key: zenodo-21163128-splits-v1
+
+      - name: Run the reproduction (repo mounted read-only, out/ writable)
+        id: run
+        run: |
+          mkdir -p out "${RUNNER_TEMP}/cardiokoop-data"
+          t0=$(date +%s)
+          set +e
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/workspace:ro" \
+            -v "${GITHUB_WORKSPACE}/out:/workspace/out" \
+            -v "${RUNNER_TEMP}/cardiokoop-data:/data" \
+            -e CARDIOKOOP_DATA_DIR=/data \
+            -e REPRO_OUT=/workspace/out \
+            cardiokoop:ci
+          rc=$?
+          set -e
+          echo "wall_time_s=$(( $(date +%s) - t0 ))" >> "$GITHUB_OUTPUT"
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          echo "$(( $(date +%s) - t0 ))" > out/wall_time_s.txt
+          exit $rc
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push verified image to GHCR
+        id: push
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+          cache-from: type=gha
+
+      - name: Record image digest and job summary
+        if: always()
+        env:
+          PUSH_DIGEST: ${{ steps.push.outputs.digest }}
+          BUILD_IMAGEID: ${{ steps.build.outputs.imageid }}
+          META_TAGS: ${{ steps.meta.outputs.tags }}
+          WALL: ${{ steps.run.outputs.wall_time_s }}
+          RC: ${{ steps.run.outputs.exit_code }}
+        run: |
+          mkdir -p out
+          if [ -n "${PUSH_DIGEST}" ]; then
+            REF="${IMAGE}@${PUSH_DIGEST}"
+            { echo "${REF}"; echo "${META_TAGS}" | tr ' ' '\n'; } > out/image_digest.txt
+          else
+            REF="cardiokoop:ci (local build, not pushed) imageid ${BUILD_IMAGEID}"
+            echo "${REF}" > out/image_digest.txt
+          fi
+          {
+            echo "## CARDIOKOOP reproduction check"
+            echo
+            echo "* commit: \`${GITHUB_SHA}\` (${GITHUB_REF})"
+            echo "* image: \`${REF}\`"
+            echo "* container wall time: ${WALL} s, exit code ${RC}"
+            echo
+            if [ -f out/compare_report.md ]; then
+              sed -n '1,/^## All metrics/p' out/compare_report.md | sed '$d'
+            else
+              echo "compare_report.md was not produced (see the run log)."
+            fi
+            echo
+            if [ -f out/run_info.json ]; then
+              echo '<details><summary>run_info.json</summary>'; echo; echo '```json'; cat out/run_info.json; echo '```'; echo '</details>'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload regenerated tables
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reproduction-tables
+          path: out/
+          if-no-files-found: warn
+          retention-days: 90
