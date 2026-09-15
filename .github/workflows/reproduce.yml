@@ -31,7 +31,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Image metadata (tags: sha-<short>, latest on main, v* on tags)
+      - name: Image metadata (sha-<short>; latest on main; v* on tags)
         id: meta
         uses: docker/metadata-action@v5
         with:
