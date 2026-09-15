@@ -91,7 +91,7 @@ CARDIOKOOP/
 │   ├── experiments/           baseline, ablation and robustness experiments; table/figure builders (`run_all.py`)
 │   ├── tables/                `export_manuscript_tables.py` (Tables 3-5 + statistics), `compare_results.py` (verification)
 │   └── reproduce.sh           Docker/CI entry point: fetch splits from Zenodo -> export -> compare
-├── notebooks/                 generate_figures_and_tables_revised_rev2.ipynb (Figures 2-4, S1-S3, S5) + notebook_utils.py
+├── notebooks/                 generate_figures_and_tables.ipynb (Figures 2-4, S1-S3, S5) + notebook_utils.py
 ├── docs/REPRODUCIBILITY.md    per-table source map, metric conventions, checkpoint identity, CI pass criteria
 ├── environment/               requirements-pinned.txt, README.md (hardware and software versions)
 ├── Dockerfile  .github/workflows/reproduce.yml   container + CI reproduction check
@@ -133,9 +133,9 @@ checkpoints above. `python scripts/experiments/run_all.py` runs tasks A–F and 
 | Reconstruction-weight sensitivity | `task7_gamma_sensitivity.py` | `results/gamma_sensitivity.json` |
 | LHS design distances / leakage check (Table S3) | `task2_lhs_distance.py` | `results/lhs_distance_check.json`, `results/table_S3_lhs_distances.{csv,tex}` |
 | Statistics and R² distributions (per-trajectory) | `task1_stats_exact.py`, `task9_r2_distribution.py` | `results/stats_exact.json`, `results/r2_per_trajectory.json` |
-| Figure 5 (b–f) and eight-model comparison tables; Fig. S9 | `build_tables_figures.py` | `results/experiments/table{3,4,5}_*.{csv,tex}`, `results/figures/figure5_rev2_comparison.svg`, `figure6_rev2_noise.svg`, `figureS9_*.svg` |
-| Figure 5 (a, g–j) | `regenerate_panels_a_gj.py` | `results/figures/figure5a_rev2.svg`, `figure5_panels_gj_rev2.svg` |
-| Figures 2–4, S1–S3, S5 | `notebooks/generate_figures_and_tables_revised_rev2.ipynb` | `results/figures/figure{2,3a-c,3d,4}.svg`, `supplementary_figure{1,2,3}.svg`, `figureS_all_signals.svg` |
+| Figure 5 (b–f) and eight-model comparison tables; Fig. S9 | `build_tables_figures.py` | `results/experiments/table{3,4,5}_*.{csv,tex}`, `results/figures/figure5_comparison.svg`, `figure6_noise.svg`, `figureS9_*.svg` |
+| Figure 5 (a, g–j) | `regenerate_panels_a_gj.py` | `results/figures/figure5a.svg`, `figure5_panels_gj.svg` |
+| Figures 2–4, S1–S3, S5 | `notebooks/generate_figures_and_tables.ipynb` | `results/figures/figure{2,3a-c,3d,4}.svg`, `supplementary_figure{1,2,3}.svg`, `figureS_all_signals.svg` |
 | Training times (Table 3) | `../measure_training_times.py` | `results/training_times.json` |
 
 A complete table/figure/number → script → result-file map is in [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md).

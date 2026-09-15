@@ -20,9 +20,9 @@ Outputs (results/experiments/):
   table3_overall_comparison.csv / .tex
   table4_per_signal.csv / .tex
   table5_noise_robustness_full.csv / .tex
-  figure5_rev2_comparison.svg / .png     (per-signal %RMSE, accuracy-vs-time,
+  figure5_comparison.svg / .png     (per-signal %RMSE, accuracy-vs-time,
                                           cumulative %RMSE, parameter count)
-  figure6_rev2_noise.svg / .png          (AWGN robustness, all 8 architectures)
+  figure6_noise.svg / .png          (AWGN robustness, all 8 architectures)
 """
 import os
 import sys
@@ -348,11 +348,11 @@ def main():
     print("\n=== Table 4 (per-signal %RMSE, test1) ===")
     print(df4.to_string())
 
-    # ── Figure 5 (rev2): reduced 6-model main + full 8-model supplement ────────
+    # ── Figure 5: reduced 6-model main + full 8-model supplement (Fig. S9) ────────
     pal = dict(zip(C.MODELS_ALL, C.PALETTE_HEX))   # canonical per-model colours
-    make_figure5(C.MODELS_MAIN, results, speedup, nparams, pal, "figure5_rev2_comparison",
+    make_figure5(C.MODELS_MAIN, results, speedup, nparams, pal, "figure5_comparison",
                  speedup_labels=False)
-    make_figure5(C.MODELS_ALL,  results, speedup, nparams, pal, "figureS9_comparison_full8")
+    make_figure5(C.MODELS_ALL,  results, speedup, nparams, pal, "figureS9_comparison")
 
     # ── Table 5 + Figure 6: AWGN noise robustness, all 8 architectures ─────────
     with open(os.path.join(C.RESULT_DIR, "noise_robustness.json")) as f:
@@ -421,9 +421,9 @@ def main():
                frameon=False, fontsize=10, handlelength=1.2, handletextpad=0.4, columnspacing=1.2)
     fig.tight_layout()
     for ext in ("svg", "png"):
-        fig.savefig(os.path.join(C.FIG_DIR, f"figure6_rev2_noise.{ext}"), dpi=150, bbox_inches="tight")
+        fig.savefig(os.path.join(C.FIG_DIR, f"figure6_noise.{ext}"), dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print("Saved -> figures/figure6_rev2_noise.svg + .png")
+    print("Saved -> figures/figure6_noise.svg + .png")
 
     # persist the noise-with-linear json for reproducibility
     with open(os.path.join(C.REV2_DIR, "noise_robustness_linear.json"), "w") as f:

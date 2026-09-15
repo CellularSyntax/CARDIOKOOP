@@ -5,8 +5,8 @@ DLinear / NLinear baselines, reusing the *exact* plotting code from the manuscri
 notebook (cells 13, 17, 21) so the aspect ratios and styling are unchanged.
 
 Outputs (results/figures/):
-  figure5a_rev2.{svg,png}                 panel a  (P_lv traces, 8 models x 2 rows)
-  figure5_panels_gj_rev2.{svg,png}        panels g,h,i,j (R2 violin | per-signal R2
+  figure5a.{svg,png}                 panel a  (P_lv traces, 8 models x 2 rows)
+  figure5_panels_gj.{svg,png}        panels g,h,i,j (R2 violin | per-signal R2
                                           heatmap | %RMSE vs SNR | R2 vs SNR heatmap)
 
 The author integrates these into the multipanel Figure 5 manually.
@@ -235,11 +235,11 @@ def main():
     true, pred = assemble_predictions()
     curve_data = build_curve_data()
     # reduced 6-model roster -> main-text Figure 5 panels
-    panel_a(true, pred, C.MODELS_MAIN, "figure5a_rev2")
-    panels_gj(true, pred, curve_data, C.MODELS_MAIN, "figure5_panels_gj_rev2")
+    panel_a(true, pred, C.MODELS_MAIN, "figure5a")
+    panels_gj(true, pred, curve_data, C.MODELS_MAIN, "figure5_panels_gj")
     # full 8-model roster -> supplementary Figure S9 panels
-    panel_a(true, pred, C.MODELS_ALL, "figureS9a_full8")
-    panels_gj(true, pred, curve_data, C.MODELS_ALL, "figureS9_panels_gj_full8")
+    panel_a(true, pred, C.MODELS_ALL, "figureS9a")
+    panels_gj(true, pred, curve_data, C.MODELS_ALL, "figureS9_panels_gj")
 
 
 if __name__ == "__main__":
